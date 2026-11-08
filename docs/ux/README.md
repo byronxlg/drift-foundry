@@ -351,3 +351,24 @@ Proposed:
 
 Pick A: keeps the ring and the rock flying home that the game already tells, and adds one number
 the player watches all game (distance to home) that their factory visibly speeds up.
+
+### More end goals, none about the rock
+
+Byron, 2026-11-09 (#19364918), on bot msg 1609: "Stfu about the rock. Give me some more options".
+Each option below has an end the player can see coming, and the thing that moves you towards it
+also makes the factory faster.
+
+- A: build the ship (pick). The end is a finished ship, five sections, and you leave. Each section
+  you finish switches on something: a crane (build faster), a bigger generator, a scanner that
+  finds richer patches, a second dock. Every section makes the next one quicker.
+- B: bring the crew home. The end is 20 crew rescued. Parts buy rescue pods; each person rescued
+  runs a machine for you, so rescues speed up rescues.
+- C: light up the planet. The end is every district lit. Powering a district opens its ground and
+  sends power back, so each lit district makes the next cheaper.
+- D: pay off the debt. The end is a debt at zero. Parts sold pay it down and buy upgrades; the
+  closest copy of the Moon Sweepers loop, one number going down.
+- E: claim the whole map. The end is 100 percent claimed. Claimed land brings new patches, which
+  pay for claiming more.
+
+Pick A: one picture of the goal on screen, it reuses the five ring segments as ship sections, and
+each step adds a new ability the player feels rather than only a bigger number.
