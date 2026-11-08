@@ -23,6 +23,7 @@ Taken from the lessons of the design system run (bot msg 1559), to be tested her
 | --- | --- | --- |
 | 1 | The whole game: how it unfolds over six hours (pacing), not a screen | set: front half as now; Engine an efficiency stage from kit C (merger, splitter, overflow, lines carry a set amount); lines show load, machines show idle, Engine asks for a rate held; built after decisions 5 and 6 |
 | 2 | First minutes: how a new player learns what to do (the advice line as now, a few guided steps, or nothing) | drawn, A/B/C sent |
+| 2b | Screen layout: every button sits with what it changes (Byron, #19364907) | A/B sent |
 | 3 | Building: pick a machine, place it, place again, cancel | proposed |
 | 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed |
 | 5 | Trouble: from seeing a problem to fixing it (tap, Next, the fix) | proposed |
@@ -236,3 +237,26 @@ also play the efficiency game for them.
 Pick B: the first minutes stay easy, and from Spine the layout is the player's, which is what
 decision 1 is for. C leaves a new player stuck at the first burner.
 
+
+## 2b. Screen layout
+
+Byron, 2026-11-09 (#19364907), on 2-first.png: "I don't understand what is going on. Seems like
+there is no coherence to placement and what buttons interact with what on the screen. The delivery
+button is especially confusing. Work out a systematic system where panels match what they interact
+with consistently. Also too much text". Taken ahead of decision 3, since every later screen sits in it.
+
+![Screen layout](2b-panels.png)
+
+As now, Deliver sits at the top but takes from the hub row at the bottom; Research sits with the map
+tools but spends hub stock; the Next sentence at the top points at the map and a card at the bottom.
+
+The rule: three bands, each owning one thing. Ring (top, blue): what it needs, nothing else. Map
+(middle): Line, Pole, Remove and power on the map's own edge, Next as the marker on the map, no
+sentence. Hub (bottom, orange): what the hub holds and everything that spends it: Deliver, Research,
+build cards. Bars show the part Deliver would add, striped in the hub colour.
+
+- A: three bands, always on screen. (pick)
+- B: the hub's things open from the Hub on the map; the top only shows the ring.
+
+Pick A: nothing is hidden behind a tap, and the rule reads from the colours alone. Shots are mock-ups
+over the real game (`?demo=2`), made by `2b-panels.html` and `2b-panels-shot.cjs`.

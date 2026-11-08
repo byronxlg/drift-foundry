@@ -1,0 +1,92 @@
+<!doctype html><meta charset="utf-8"><style>
+*{box-sizing:border-box}body{margin:0;background:#fff;font:15px/1.3 -apple-system,system-ui,sans-serif;color:#162026}
+.wrap{padding:20px 24px;width:1330px}h1{font-size:26px;margin:0 0 4px}.sub{color:#56616a;margin:0 0 16px;font-size:17px}
+.cols{display:grid;grid-template-columns:390px 390px 390px;gap:40px}
+.lab{font-size:20px;font-weight:700;margin:0 0 4px}.cap{font-size:15px;color:#56616a;margin:0 0 10px;min-height:40px}
+.pick{display:inline-block;background:#2346d8;color:#fff;font-size:12px;padding:2px 7px;border-radius:5px;margin-left:6px;vertical-align:3px}
+.ph{position:relative;width:390px;height:664px;border:1px solid #dde1e3;border-radius:22px;overflow:hidden;background:#fff}
+.shot{position:absolute;left:0;width:390px;background:url(2b-now.png) no-repeat;background-size:390px 664px}
+.zone{position:absolute;left:0;right:0}
+.tag{position:absolute;font:700 11px/1 system-ui;letter-spacing:.08em;text-transform:uppercase;padding:4px 7px;border-radius:5px}
+.ring{background:#e9eefc}.ring .tag{background:#2346d8;color:#fff}
+.hub{background:#fdf1e2}.hub .tag{background:#b25e00;color:#fff}
+.mapt{background:#162026;color:#fff}
+.nm{font-weight:700;font-size:28px}.ic{display:inline-block;width:14px;height:10px;border-radius:2px;margin-right:5px}
+.need{position:absolute;width:104px}.need .t{font-size:14px;font-weight:600}.need .v{font:700 17px/1.2 system-ui}.need .v small{color:#56616a;font-weight:600;font-size:13px}
+.bar{height:8px;border-radius:4px;background:#d5dcf5;position:relative;overflow:hidden;margin-top:3px}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:#2346d8}
+.bar b{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,#b25e00 0 3px,#f2c78f 3px 6px)}
+.btn{position:absolute;border-radius:10px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px}
+.send{background:#b25e00;color:#fff;font-size:17px}
+.mt{position:absolute;width:44px;height:44px;border-radius:12px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:10px;font-weight:700;color:#162026}
+.mt svg{width:18px;height:18px}
+.pw{position:absolute;background:#fff;border-radius:10px;padding:6px 9px;box-shadow:0 2px 8px rgba(0,0,0,.2);font-weight:700;font-size:14px}
+.st{position:absolute;font-size:14px;color:#56616a}.st b{color:#162026;font-size:16px}
+.chip{position:absolute;background:#d1242f;color:#fff;font-weight:700;font-size:13px;padding:5px 8px;border-radius:7px}
+.menu{position:absolute;width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center}
+svg.ov{position:absolute;inset:0;pointer-events:none}
+.rule{margin:18px 0 0;font-size:16px;color:#162026}.rule span{display:inline-block;margin-right:22px}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+</style><div class="wrap">
+<h1>Screen layout: every button sits with what it changes</h1>
+<p class="sub">Spine, about 25 minutes in, same game state in all three. Coloured lines on the left: what each button actually changes.</p>
+<div class="cols">
+
+<div><div class="lab">As now</div><div class="cap">Deliver takes from the hub row at the bottom and fills the bars at the top. Research sits with the map tools but spends hub stock.</div>
+<div class="ph"><div class="shot" style="top:0;height:664px;background-position:0 0"></div>
+<svg class="ov" viewBox="0 0 390 664"><defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#d1242f"/></marker><marker id="b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#b25e00"/></marker><marker id="c" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7a3fd0"/></marker></defs>
+<g fill="none" stroke-width="3.5" stroke-linecap="round">
+<path d="M262 531 C 380 470, 380 250, 345 172" stroke="#d1242f" marker-end="url(#a)"/>
+<path d="M300 146 C 270 140, 250 120, 230 112" stroke="#d1242f" marker-end="url(#a)"/>
+<path d="M290 485 C 250 460, 220 470, 200 518" stroke="#b25e00" marker-end="url(#b)"/>
+<path d="M80 172 C 60 230, 90 280, 132 296" stroke="#7a3fd0" marker-end="url(#c)"/>
+<path d="M140 172 C 200 300, 300 420, 318 548" stroke="#7a3fd0" marker-end="url(#c)"/>
+</g></svg></div></div>
+
+<div><div class="lab">A: three bands<span class="pick">pick</span></div><div class="cap">Ring on top, map in the middle, hub at the bottom. Each button lives in the band it changes.</div>
+<div class="ph">
+<div class="zone ring" style="top:0;height:150px"><span class="tag" style="left:14px;top:12px">Ring</span>
+ <svg style="position:absolute;left:14px;top:34px" width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#d5dcf5" stroke-width="6"/><path d="M20 5 A15 15 0 0 1 34 25" fill="none" stroke="#2346d8" stroke-width="6"/></svg>
+ <div class="nm" style="position:absolute;left:62px;top:36px">Spine</div>
+ <div class="menu" style="right:12px;top:10px"><svg width="18" height="14"><path d="M0 1h18M0 7h18M0 13h18" stroke="#162026" stroke-width="2.2"/></svg></div>
+ <div class="need" style="left:14px;top:84px"><div class="t"><span class="ic" style="background:#4c606e"></span>Ingot</div><div class="v">744<small>/1,200</small></div><div class="bar"><i style="width:62%"></i><b style="left:62%;width:1%"></b></div></div>
+ <div class="need" style="left:128px;top:84px"><div class="t"><span class="ic" style="background:#155fbe"></span>Plate</div><div class="v">304<small>/800</small></div><div class="bar"><i style="width:38%"></i><b style="left:38%;width:62%"></b></div></div>
+ <div class="need" style="left:242px;top:84px;width:134px"><div class="t"><span class="ic" style="background:#90520c"></span>Wire</div><div class="v">750<small>/1,500</small></div><div class="bar"><i style="width:50%"></i><b style="left:50%;width:50%"></b></div></div>
+</div>
+<div class="shot" style="top:150px;height:302px;background-position:0 -172px"></div>
+<div class="pw" style="right:10px;top:160px;color:#d1242f">Power 72/70</div>
+<div class="mt" style="left:10px;top:290px"><svg viewBox="0 0 16 16"><circle cx="3" cy="12" r="2.2"/><circle cx="13" cy="4" r="2.2"/><path d="M3 12C3 6 13 10 13 4" fill="none" stroke="#162026" stroke-width="1.8"/></svg>Line</div>
+<div class="mt" style="left:10px;top:340px"><svg viewBox="0 0 16 16"><path d="M9 1L3 9h4l-1 6 6-8H8z"/></svg>Pole</div>
+<div class="mt" style="left:10px;top:390px"><svg viewBox="0 0 16 16"><path d="M4 2l4 4 4-4 2 2-4 4 4 4-2 2-4-4-4 4-2-2 4-4-4-4z"/></svg>Remove</div>
+<div class="zone hub" style="top:452px;height:212px"><span class="tag" style="left:14px;top:10px">Hub</span>
+ <div class="st" style="left:62px;top:7px"><b>4,368</b> ore</div><div class="st" style="left:138px;top:7px"><b>7</b> ingot</div><div class="st" style="left:190px;top:7px"><b>3,012</b> plate</div><div class="st" style="left:285px;top:7px"><b>6,623</b> wire</div>
+ <div class="btn send" style="left:14px;right:126px;top:36px;height:42px">&#8593; Deliver to ring</div>
+ <div class="btn" style="right:14px;width:102px;top:36px;height:42px;background:#fff;border:2px solid #b25e00;color:#b25e00">Research</div>
+ <div class="shot" style="top:96px;height:112px;background-position:0 -548px;background-color:transparent"></div>
+</div>
+</div></div>
+
+<div><div class="lab">B: on the thing itself</div><div class="cap">Tap the Hub on the map and its stock, Deliver and Research open there. The top only shows the ring.</div>
+<div class="ph">
+<div class="zone ring" style="top:0;height:150px"><span class="tag" style="left:14px;top:12px">Ring</span>
+ <svg style="position:absolute;left:14px;top:34px" width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#d5dcf5" stroke-width="6"/><path d="M20 5 A15 15 0 0 1 34 25" fill="none" stroke="#2346d8" stroke-width="6"/></svg>
+ <div class="nm" style="position:absolute;left:62px;top:36px">Spine</div>
+ <div class="menu" style="right:12px;top:10px"><svg width="18" height="14"><path d="M0 1h18M0 7h18M0 13h18" stroke="#162026" stroke-width="2.2"/></svg></div>
+ <div class="need" style="left:14px;top:84px"><div class="t"><span class="ic" style="background:#4c606e"></span>Ingot</div><div class="v">744<small>/1,200</small></div><div class="bar"><i style="width:62%"></i></div></div>
+ <div class="need" style="left:128px;top:84px"><div class="t"><span class="ic" style="background:#155fbe"></span>Plate</div><div class="v">304<small>/800</small></div><div class="bar"><i style="width:38%"></i></div></div>
+ <div class="need" style="left:242px;top:84px;width:134px"><div class="t"><span class="ic" style="background:#90520c"></span>Wire</div><div class="v">750<small>/1,500</small></div><div class="bar"><i style="width:50%"></i></div></div>
+</div>
+<div class="shot" style="top:150px;height:514px;background-position:0 -172px"></div>
+<div style="position:absolute;left:0;right:0;top:150px;height:250px;background:rgba(22,32,38,.35)"></div>
+<div class="pw" style="right:10px;top:160px;color:#d1242f">Power 72/70</div>
+<div style="position:absolute;left:153px;top:283px;width:84px;height:84px;border:4px solid #b25e00;border-radius:12px"></div>
+<div class="zone hub" style="top:398px;height:266px;border-radius:18px 18px 0 0;box-shadow:0 -6px 18px rgba(0,0,0,.25)"><span class="tag" style="left:14px;top:14px">Hub</span>
+ <div class="st" style="left:14px;top:44px"><b>4,368</b> ore</div><div class="st" style="left:110px;top:44px"><b>7</b> ingot</div><div class="st" style="left:180px;top:44px"><b>3,012</b> plate</div><div class="st" style="left:278px;top:44px"><b>6,623</b> wire</div>
+ <div class="btn send" style="left:14px;right:14px;top:80px;height:48px">&#8593; Deliver to ring</div>
+ <div class="btn" style="left:14px;right:14px;top:138px;height:44px;background:#fff;border:2px solid #b25e00;color:#b25e00">Research</div>
+ <div class="st" style="left:14px;top:196px;right:14px">Build cards and map tools come back when this closes.</div>
+</div>
+</div></div>
+</div>
+<p class="rule"><span><i class="sw" style="background:#2346d8"></i>Ring: what it needs</span><span><i class="sw" style="background:#162026"></i>Map: Line, Pole, Remove, power, on the map's edge</span><span><i class="sw" style="background:#b25e00"></i>Hub: what you have and what spends it</span></p>
+</div>
