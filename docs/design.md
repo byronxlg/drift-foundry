@@ -35,13 +35,16 @@ parts; delivering them unlocks the next tier of buildings. The ring is the game'
 6. Mini Metro: one flat colour per item, used as a small swatch everywhere the item appears (recipes, costs, bars).
 7. Google Maps "fastest route" style single recommendation: the advice line follows the slowest part upstream through starved inputs and offers one tap to build the fix.
 
-## Two directions
+## Two directions (list screens, retired 2026-11-08)
+
+The list screens below were replaced by the builder; `src/ui.js` and `src/style.css` were deleted
+and old `?skin=` links now open the builder.
 
 - A "Survey": blueprint blue ground, amber accent, IBM Plex Sans Condensed and Plex Mono numerals, the ring drawn as a five-arc dial in a framed card.
 - B "Yard": concrete grey ground, black and safety yellow, Barlow Condensed at large sizes, uppercase labels, ring as five hatched hoarding panels, no card frame.
 
-Same structure and engine; `?skin=b` switches. `?demo=1..4` seeds a mid-game state for review
-without touching a save.
+Same structure and engine; `?skin=b` switched. `?demo=1..4` seeds a mid-game state for review
+without touching a save (still true in the builder).
 
 ## State map
 
@@ -69,14 +72,15 @@ idle part.
 
 ## Design system
 
-The UI system (roles, items, glyph language, type, space, components, two directions) is in
+The UI system (roles, items, glyph language, type, space, components, direction B) is in
 [design-system.md](design-system.md).
 
-## Builder (preview at `?ui=build`)
+## Builder (the game, default since 2026-11-08)
 
 Byron, 2026-11-08, on directions A and B: "I want it to look like a full screen app no scrolling.
-I want it to be more builder like. Satisfactory kind of thing." The list screens stay the default
-until he says yes in words; the builder is a preview with its own save.
+I want it to be more builder like. Satisfactory kind of thing." It was a preview at `?ui=build`
+until he picked design system direction B for it (#19364880); it is now the only screen, `?ui=`,
+`?ds=` and `?skin=` are ignored, and it keeps its own save key (`drift-foundry/build`).
 
 ### Idea
 
@@ -129,7 +133,8 @@ goal and lives in the HUD; the factory is what you look at.
 
 ### Tokens
 
-Ground `#14181c` (fog `#0b0e10`, surveyed rock `#1f262c`, tile seam `#262e35`), ink `#eef1f3`
+Superseded by [design-system.md](design-system.md) direction B (light, `src/theme.js`); kept as the
+first builder pass. Ground `#14181c` (fog `#0b0e10`, surveyed rock `#1f262c`, tile seam `#262e35`), ink `#eef1f3`
 (16.3:1 on ground), mute `#a3afb9` (8.4:1), accent FICSIT orange `#ff9a2e` (8.7:1, accent ink
 `#1a1000` on it 9.9:1), power `#59c8ff`, ok `#6fdc8c`, warn `#ffc23d`, bad `#ff6b5b` (6.1:1).
 Item colours carry over from the list screens. Barlow for text, Barlow Condensed for figures.

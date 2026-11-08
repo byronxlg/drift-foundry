@@ -11,8 +11,9 @@ rollback_minutes: 10
 
 1. Branch, change, open a PR. `check.yml` runs `node --check` on every module and the balance gate
    (`node sim/balance.mjs 15` must finish between 4 h and 9 h, builder and `--abstract`).
-2. Design changes: preview behind a query flag (`?ui=build`, `&ds=`), screenshots at phone and
-   desktop, and Byron's yes in words before it becomes the default (management D71).
+2. Design changes: preview behind a query flag (a new `?` param, read in `src/build.js`),
+   screenshots at phone and desktop, and Byron's yes in words before it becomes the default
+   (management D71).
 3. Merge to `main`. `pages.yml` reruns the balance gate and deploys the repo root to Pages;
    live within a few minutes.
 4. Check: `curl -s -o /dev/null -w '%{http_code}' https://byronxlg.com/drift-foundry/` is 200 and
