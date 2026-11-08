@@ -1,0 +1,33 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Piece 8, top bar, 2026-11-09. Each picture is the real game on a phone (iPhone 13): left a new game,
+right ?demo=2, with the option applied (8-hud-<moment>-<a|b|c>.png, made by the shot script in the PR).
+Render: serve the repo root, open docs/pieces/8-hud.html at 1080 px wide, screenshot the page to 8-hud.png. -->
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#b9bfc2;font-family:Archivo,sans-serif;color:#162026;width:1080px}
+.h{padding:30px 36px 24px;background:#fff}
+.h .prog{font:600 20px/1.2 Archivo;color:#56616a;margin:0 0 10px}
+.h h1{font:700 44px/1.05 Archivo;margin:0}
+.h p{font:400 25px/1.35 Archivo;margin:12px 0 0}
+.opt{background:#fff;margin:14px 0 0;padding:22px 36px 28px}
+.opt h2{font:700 40px/1 Archivo;margin:0 0 8px;display:flex;align-items:center;gap:14px}
+.opt h2 .pick{font:700 20px/1 Archivo;background:#2346d8;color:#fff;border-radius:8px;padding:7px 12px}
+.opt p{font:400 25px/1.35 Archivo;margin:0 0 16px}
+.pair{display:flex;gap:20px}
+.pair figure{margin:0;width:494px}
+.pair figcaption{font:600 20px/1 Archivo;color:#56616a;margin:0 0 8px}
+.shot{width:494px;height:254px;border-radius:12px;background-size:494px auto;background-position:0 0;border:1px solid #d5d9db}
+.f{background:#fff;margin:14px 0 0;padding:20px 36px 26px;font:600 25px/1.35 Archivo}
+.f b{color:#2346d8}
+</style></head><body>
+<div class="h"><p class="prog">Piece 8 of 10. Done: items, machines, supply lines, ground, power, problem marks, type.</p>
+<h1>Top bar: the line under each goal</h1>
+<p>Left: a new game, nothing built yet. Right: later on. Only the small line under each goal changes.</p></div>
+<section class="opt"><h2>A</h2><p>As now. A new game opens with "not being made" in red, which reads like something broke.</p>
+<div class="pair"><figure><figcaption>New game</figcaption><div class="shot" style="background-image:url(8-hud-start-a.png)"></div></figure><figure><figcaption>Later</figcaption><div class="shot" style="background-image:url(8-hud-mid-a.png)"></div></figure></div></section>
+<section class="opt"><h2>B <span class="pick">my pick</span></h2><p>Grey "not started" until you build for it. Red only when it was coming in and stopped.</p>
+<div class="pair"><figure><figcaption>New game</figcaption><div class="shot" style="background-image:url(8-hud-start-b.png)"></div></figure><figure><figcaption>Later</figcaption><div class="shot" style="background-image:url(8-hud-mid-b.png)"></div></figure></div></section>
+<section class="opt"><h2>C</h2><p>No line at all. The bar and the Next box say it. Shorter bar, more map, but no warning when a goal stops.</p>
+<div class="pair"><figure><figcaption>New game</figcaption><div class="shot" style="background-image:url(8-hud-start-c.png)"></div></figure><figure><figcaption>Later</figcaption><div class="shot" style="background-image:url(8-hud-mid-c.png)"></div></figure></div></section>
+<div class="f">My pick: <b>B</b>. Red keeps meaning trouble; a new game starts calm.</div>
+</body></html>
