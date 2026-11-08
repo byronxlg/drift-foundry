@@ -1,0 +1,112 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Piece 6, status marks, 2026-11-09. How a machine says it needs you. Machines and the marks in A are
+drawn by the game's own drawMachine and drawBuilding rules (sliced from src/build.js at load). Render:
+serve the repo root, open docs/pieces/6-status.html at 1080 px wide, screenshot the page to 6-status.png. -->
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Archivo+Narrow:wght@600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#b9bfc2;font-family:Archivo,sans-serif;color:#162026;width:1080px}
+.h{padding:30px 36px 24px;background:#fff}
+.h .prog{font:600 20px/1.2 Archivo;color:#56616a;margin:0 0 10px}
+.h h1{font:700 44px/1.05 "Archivo Narrow";margin:0}
+.h p{font:400 25px/1.35 Archivo;margin:12px 0 0;color:#162026}
+.opt{background:#fff;margin:14px 0 0;padding:22px 36px 28px}
+.opt h2{font:700 40px/1 "Archivo Narrow";margin:0 0 8px;display:flex;align-items:center;gap:14px}
+.opt h2 .pick{font:700 20px/1 Archivo;background:#2346d8;color:#fff;border-radius:8px;padding:7px 12px}
+.opt p{font:400 25px/1.35 Archivo;margin:0 0 16px}
+canvas{display:block;border-radius:12px;width:1008px;height:432px}
+.f{background:#fff;margin:14px 0 0;padding:20px 36px 26px;font:600 25px/1.35 Archivo}
+.f b{color:#2346d8}
+</style></head><body>
+<div class="h"><p class="prog">Piece 6 of 10. Done: items, machines, supply lines, ground, power.</p>
+<h1>Problem marks</h1>
+<p>The small mark a machine gets when it needs you. Same machines in each: one running fine, then each kind of trouble. On the right is the ore field the game asks you to tap first.</p></div>
+<div id="opts"></div>
+<div class="f">My pick: <b>B</b>. One spot to look, top right of every machine; red means stopped, amber means slow. The first tap is called Next, not Fix.</div>
+<script type="module">
+import { THEME as TH, SHAPE } from '../../src/theme.js';
+import * as G from '../../src/game.js';
+const src = await (await fetch('../../src/build.js')).text();
+const body = src.slice(src.indexOf('function drawItem(g, k'), src.indexOf('const iconCache'));
+const PATH = {}; for (const k in SHAPE) PATH[k] = new Path2D(SHAPE[k]);
+const KIND = { drill: 'x', coaldrill: 'x', quarry: 'x', quartzdrill: 'x', smelter: 'f', kiln: 'f', refinery: 'f', burner: 'g', turbine: 'g', solar: 's' };
+const outItem = (b) => Object.keys(G.BUILDINGS[b].out)[0]; const outOf = (b) => G.BUILDINGS[b].gen ? '' : outItem(b);
+const { drawMachine, drawItem } = new Function('TH', 'COL', 'COL_ON', 'PATH', 'G', 'KIND', 'outOf', body + 'return { drawMachine, drawItem };')(TH, TH.items, TH.itemsOn, PATH, G, KIND, outOf);
+
+const Z = 72, NX = 14, NY = 6, W = NX * Z, H = NY * Z;
+const ctr = (x, y) => [x * Z + Z / 2, y * Z + Z / 2];
+// the row: [machine, x, y, state, words under it]
+const ROW = [['smelter', 1, 0.6, 'ok', 'running'], ['press', 4.3, 0.6, 'starved', 'short of input'], ['drawer', 7.6, 0.6, 'nopower', 'no power'],
+  ['kiln', 1, 3.4, 'noout', 'no line out'], ['smelter', 4.3, 3.4, 'backed', 'output piling up'], ['press', 7.6, 3.4, 'off', 'stood by']];
+const ORE = [[11, 2], [12, 2], [11, 3], [12, 3], [13, 3], [12, 4]];
+const IN = { smelter: [0, 1], press: [3, 1], drawer: [6, 1], kiln: [9, 1] }; // where each input line comes from (one tile left)
+
+function patch(g, tiles, col) {
+  const o = document.createElement('canvas'); o.width = W * 2; o.height = H * 2; const q = o.getContext('2d'); q.scale(2, 2); q.fillStyle = col;
+  for (const [x, y] of tiles) { q.beginPath(); q.arc(...ctr(x, y), Z * .72, 0, 7); q.fill(); }
+  const e = document.createElement('canvas'); e.width = W * 2; e.height = H * 2; const eg = e.getContext('2d'); eg.drawImage(o, 0, 0); eg.globalCompositeOperation = 'destination-in';
+  for (let k = 0; k < 8; k++) { const t = k / 8 * Math.PI * 2; eg.drawImage(o, Math.cos(t) * 4, Math.sin(t) * 4); }
+  const r = document.createElement('canvas'); r.width = W * 2; r.height = H * 2; const rg = r.getContext('2d'); rg.drawImage(o, 0, 0); rg.globalCompositeOperation = 'destination-out'; rg.drawImage(e, 0, 0);
+  g.save(); g.globalAlpha = TH.nodeAlpha; g.drawImage(e, 0, 0, W, H); g.globalAlpha = TH.rimAlpha; g.drawImage(r, 0, 0, W, H); g.restore();
+}
+function lumps(g, x, y, k) { drawItem(g, k, x * Z + Z * .14, y * Z + Z * .14, Z * .42); drawItem(g, k, x * Z + Z * .5, y * Z + Z * .48, Z * .34); }
+function line(g, a, b, k, opt) { // a short supply line with one item riding it
+  const p = ctr(...a), q = ctr(...b); g.strokeStyle = opt.col || TH.supply; g.lineWidth = Z * .09; g.lineCap = 'round';
+  if (opt.dash) g.setLineDash([Z * .14, Z * .14]); g.beginPath(); g.moveTo(...p); g.lineTo(...q); g.stroke(); g.setLineDash([]);
+  if (k) drawItem(g, k, (p[0] + q[0]) / 2 - Z * .15, (p[1] + q[1]) / 2 - Z * .15, Z * .3);
+}
+function badge(g, sx, sy, col, ring) { const r = Z * .2, bx = sx + Z * .84, by = sy + Z * .16;
+  g.fillStyle = col; g.strokeStyle = ring || '#ffffff'; g.lineWidth = 2.5; g.beginPath(); g.arc(bx, by, r, 0, 7); g.fill(); g.stroke(); return [bx, by, r]; }
+const glyph = {
+  bolt(g, bx, by, r) { g.fillStyle = '#fff'; g.beginPath(); g.moveTo(bx + r * 0.2, by - r * 0.7); g.lineTo(bx - r * 0.4, by + r * 0.1); g.lineTo(bx, by + r * 0.1); g.lineTo(bx - r * 0.2, by + r * 0.7); g.lineTo(bx + r * 0.4, by - r * 0.1); g.lineTo(bx, by - r * 0.1); g.fill(); },
+  pause(g, bx, by, r, c) { g.fillStyle = c || '#fff'; g.fillRect(bx - r * .42, by - r * .45, r * .3, r * .9); g.fillRect(bx + r * .12, by - r * .45, r * .3, r * .9); },
+  empty(g, bx, by, r) { g.strokeStyle = '#fff'; g.lineWidth = 2.2; g.beginPath(); g.arc(bx, by, r * .45, 0, 7); g.stroke(); }, // an empty slot: short of input
+  stop(g, bx, by, r) { g.fillStyle = '#fff'; g.fillRect(bx - r * .5, by - r * .14, r, r * .28); }, // a bar: nothing can leave
+  full(g, bx, by, r) { g.fillStyle = '#fff'; for (const k of [-1, 0, 1]) g.fillRect(bx - r * .45, by + k * r * .32 - r * .1, r * .9, r * .2); }, // a stack: piling up
+};
+function markA(g, st, sx, sy) { // as drawBuilding does today
+  const z = Z, r = Math.max(4.5, z * 0.17), bx = sx + z * 0.84, by = sy + z * 0.16;
+  if (st === 'noout') { g.strokeStyle = TH.bad; g.lineWidth = Math.max(2, z * 0.08); g.setLineDash([z * 0.22, z * 0.12]); g.beginPath(); g.roundRect(sx + 1, sy + 1, z - 2, z - 2, z * 0.18); g.stroke(); g.setLineDash([]); }
+  else if (st === 'nopower') { g.fillStyle = TH.bad; g.beginPath(); g.arc(bx, by, r, 0, 7); g.fill(); glyph.bolt(g, bx, by, r); }
+  else if (st === 'off') { g.fillStyle = TH.surface; g.beginPath(); g.arc(bx, by, r, 0, 7); g.fill(); glyph.pause(g, bx, by, r, TH.ink2); }
+  else if (st === 'starved' || st === 'backed') { g.fillStyle = TH.warn; g.strokeStyle = TH.ink; g.lineWidth = 1.2; g.beginPath(); g.moveTo(bx, by - r); g.lineTo(bx + r, by + r * 0.75); g.lineTo(bx - r, by + r * 0.75); g.closePath(); g.fill(); g.stroke(); }
+}
+function markB(g, st, sx, sy) {
+  if (st === 'ok') return;
+  if (st === 'off') { const [bx, by, r] = badge(g, sx, sy, TH.surface, TH.ink2); glyph.pause(g, bx, by, r, TH.ink2); return; }
+  const col = st === 'starved' || st === 'backed' ? TH.warn : TH.bad; const [bx, by, r] = badge(g, sx, sy, col);
+  glyph[{ nopower: 'bolt', starved: 'empty', noout: 'stop', backed: 'full' }[st]](g, bx, by, r);
+}
+function chip(g, x, y, lab) { const px = x * Z, py = y * Z; g.strokeStyle = TH.accent; g.lineWidth = 3; g.beginPath(); g.roundRect(px - 3, py - 3, Z + 6, Z + 6, Z * .26); g.stroke();
+  g.font = `700 ${Z * .36}px "Archivo Narrow"`; const tw = g.measureText(lab).width + 12, th = Z * .46;
+  g.fillStyle = TH.accent; g.beginPath(); g.roundRect(px + Z / 2 - tw / 2, py - th / 2 - 4, tw, th, 4); g.fill();
+  g.fillStyle = TH.accentInk; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(lab, px + Z / 2, py - 3); }
+
+function draw(g, opt) {
+  g.fillStyle = TH.terrain; g.fillRect(0, 0, W, H);
+  patch(g, ORE, TH.items.ore); for (const [x, y] of ORE) lumps(g, x, y, 'ore');
+  for (const [b, x, y, st] of ROW) { const from = [x - 1, y]; const k = Object.keys(G.BUILDINGS[b].in)[0];
+    const cut = opt === 'C' && st === 'starved'; line(g, from, [x, y], cut ? null : k, cut ? { col: TH.warn, dash: true } : {});
+    if (st !== 'noout') { const back = opt === 'C' && st === 'backed'; line(g, [x, y], [x + 1, y + 0], back ? outItem(b) : null, back ? { col: TH.warn } : {}); }
+    else if (opt === 'C') { g.strokeStyle = TH.bad; g.lineWidth = Z * .09; g.lineCap = 'round'; g.setLineDash([Z * .1, Z * .12]); g.beginPath(); g.moveTo(x * Z + Z, y * Z + Z / 2); g.lineTo(x * Z + Z * 1.55, y * Z + Z / 2); g.stroke(); g.setLineDash([]); } }
+  for (const [b, x, y, st, words] of ROW) {
+    drawMachine(g, b, x * Z, y * Z, Z, { off: st === 'off' || st === 'nopower', running: st === 'ok' || st === 'starved', t: 0.4 });
+    (opt === 'A' ? markA : markB)(g, st, x * Z, y * Z);
+    g.fillStyle = TH.ink2; g.font = '600 20px Archivo'; g.textAlign = 'center'; g.textBaseline = 'top'; g.fillText(words, x * Z + Z / 2, y * Z + Z + 8);
+  }
+  chip(g, 12, 2, opt === 'A' ? 'Fix' : 'Next');
+}
+const OPTS = [
+  ['A', 'As now. Four different marks: a yellow triangle (short of input, or piling up), a red bolt, a red dashed outline round the whole machine, a grey pause. The first ore field says Fix.'],
+  ['B', 'One round mark, always top right. Red when the machine has stopped, amber when it is slow, grey when you stood it by. The picture inside says why. The first tap says Next.', true],
+  ['C', 'B, plus the line that causes it changes: a dashed amber line where input is short, a red stub where an output line is missing, an amber line where output is piling up.'],
+];
+await document.fonts.load('700 17px "Archivo Narrow"'); await document.fonts.load('600 20px Archivo');
+for (const [k, txt, pick] of OPTS) {
+  const sec = document.createElement('section'); sec.className = 'opt';
+  sec.innerHTML = `<h2>${k}${pick ? '<span class="pick">My pick</span>' : ''}</h2><p>${txt}</p>`;
+  const cv = document.createElement('canvas'); cv.width = W * 2; cv.height = H * 2; sec.append(cv);
+  document.getElementById('opts').append(sec);
+  const g = cv.getContext('2d'); g.scale(2, 2); draw(g, k);
+}
+document.body.dataset.ready = '1';
+</script></body></html>
