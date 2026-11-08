@@ -1,0 +1,90 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Archivo+Narrow:wght@600;700&display=swap" rel="stylesheet"><span style="font:700 15px 'Archivo Narrow';position:absolute;opacity:0">Hub</span>
+<style>
+body{margin:0;background:#b9bfc2;font-family:Archivo,sans-serif;color:#162026;width:1080px}
+.h{padding:28px 32px 8px;background:#fff}
+.h h1{font:700 34px/1.1 "Archivo Narrow";margin:0}
+.h p{font:400 19px/1.35 Archivo;margin:8px 0 18px;color:#56616a}
+.opt{background:#fff;margin:14px 0 0;padding:20px 32px 24px}
+.opt h2{font:700 28px/1 "Archivo Narrow";margin:0 0 4px}
+.opt h2 b{color:#2346d8}
+.opt .why{font:400 18px/1.35 Archivo;color:#56616a;margin:0 0 14px}
+.row{display:flex;gap:16px;align-items:flex-start}
+.lab{font:600 13px/1 Archivo;color:#56616a;margin:0 0 6px}
+canvas{display:block;border-radius:10px}
+</style></head><body>
+<div class="h"><h1>Design system, piece 3 of 8: map ground</h1>
+<p>What the factory stands on: ore nodes, belts, power reach and the tiles you can build on. Left: a drill field feeding a smelter into the Hub, one belt not joined. Right: the same ground with a smelter in hand.</p></div>
+<div id="opts"></div>
+<script>
+const SHAPE={ore:'M.2 .38L.5 .12L.84 .3L.8 .74L.38 .88L.14 .66Z',coal:'M.08 .56C.2 .3 .8 .22 .92 .44C.8 .7 .2 .8 .08 .56Z',ingot:'M.06 .72L.22 .3L.78 .3L.94 .72Z'};
+const DEEP={ore:'#a64027',coal:'#30353b',ingot:'#4c606e'},ON={ore:'#f9b3a2',coal:'#a7aeb7',ingot:'#e3e8eb'};
+const T={terrain:'#eef0ef',fog:'#b9bfc2',ink:'#162026',ink2:'#56616a',accent:'#2346d8',accentSoft:'rgba(35,70,216,0.24)',power:'#00897b',powerSoft:'rgba(0,137,123,0.14)',bad:'#d1242f',belt:'#a3acb2',beltBad:'#e7a7a3',machine:'#2c353c',edge:'#162026'};
+const P={};for(const k in SHAPE)P[k]=new Path2D(SHAPE[k]);
+const item=(g,k,x,y,s,c,a=1)=>{g.save();g.globalAlpha*=a;g.translate(x,y);g.scale(s,s);g.fillStyle=c;g.fill(P[k],'evenodd');g.restore();};
+const Z=44,NX=11,NY=7;
+// scene: ore deposit, coal tile, drills, belts to a smelter, belt to the hub, a pole, a loose belt
+const ORE=[[1,1],[1,2],[1,3],[0,2]],COAL=[[4,5]];
+const DRILLS=[[1,1],[1,3]],SMELT=[[5,2]],POLE=[[6,4]],HUB=[8,1];
+const BELTS=[[[1,2],[1,1],'d'],[[2,1],[2,2],'d'],[[3,2],[2,2],'r'],[[4,2],[2,2],'r'],[[6,2],[5,2],'r'],[[7,2],[5,2],'r']];
+// belt list as path: drill(1,1)->(1,2)? keep simple: chain tiles with direction
+const CHAIN=[{t:[2,1],d:[0,1]},{t:[2,3],d:[0,-1]},{t:[2,2],d:[1,0]},{t:[3,2],d:[1,0]},{t:[4,2],d:[1,0]},{t:[6,2],d:[1,0]},{t:[7,2],d:[1,0]}];
+const LOOSE=[{t:[3,5],d:[0,-1]},{t:[3,4],d:[0,-1]}];
+const reach=(x,y)=>Math.hypot(x-6,y-4)<=2.5||Math.hypot(x-9,y-2)<=3.5;
+const isNode=(x,y,L)=>L.some(([a,b])=>a===x&&b===y);
+const occ=(x,y)=>isNode(x,y,DRILLS)||isNode(x,y,SMELT)||(x>=8&&x<=10&&y>=1&&y<=3)||CHAIN.concat(LOOSE).some(c=>c.t[0]===x&&c.t[1]===y)||isNode(x,y,POLE);
+function drill(g,sx,sy){const m=Z*.07,w=Z-2*m,cx=sx+Z/2,cy=sy+Z/2;g.fillStyle=T.machine;g.beginPath();for(let i=0;i<3;i++){const a=i/3*Math.PI*2-Math.PI/2;g.moveTo(cx,cy);g.arc(cx,cy,w*.5,a-.28,a+.28);g.closePath();}g.fill();g.beginPath();g.arc(cx,cy,w*.4,0,7);g.fill();item(g,'ore',cx-w*.23,cy-w*.23,w*.46,ON.ore);}
+function smelter(g,sx,sy){const m=Z*.07,w=Z-2*m,x=sx+m,y=sy+m,cy=sy+Z/2;g.fillStyle=T.machine;g.strokeStyle=T.edge;g.lineWidth=1.5;g.beginPath();g.roundRect(x,y+w*.14,w,w*.86,8);g.fill();g.stroke();g.fillRect(x+w*.66,y,w*.22,w*.3);item(g,'ingot',x+w*.44,cy-w*.24+w*.07,w*.48,ON.ingot);item(g,'ore',x+w*.07,cy-w*.13+w*.07,w*.26,ON.ore);}
+function hub(g){const [hx,hy]=[HUB[0]*Z,HUB[1]*Z];g.fillStyle='#162026';g.beginPath();g.roundRect(hx+2,hy+2,Z*3-4,Z*3-4,14);g.fill();g.strokeStyle=T.accent;g.lineWidth=3;g.stroke();g.fillStyle='#fff';g.font='700 15px "Archivo Narrow"';g.textAlign='center';g.textBaseline='middle';g.fillText('Hub',hx+Z*1.5,hy+Z*1.5);}
+function scene(g,o,placing){
+ g.fillStyle=T.terrain;g.fillRect(0,0,NX*Z,NY*Z);
+ // fog band on the right column bottom row: unrevealed
+ g.fillStyle=T.fog;g.fillRect(0,6*Z,NX*Z,Z);
+ const showCov=placing||o==='B';
+ for(let y=0;y<6;y++)for(let x=0;x<NX;x++){const sx=x*Z,sy=y*Z;
+  if(showCov&&reach(x,y)){ if(o==='C'){g.save();g.beginPath();g.rect(sx,sy,Z,Z);g.clip();g.strokeStyle='rgba(0,137,123,0.28)';g.lineWidth=1.2;for(let k=-Z;k<Z*2;k+=7){g.beginPath();g.moveTo(sx+k,sy);g.lineTo(sx+k-Z,sy+Z);g.stroke();}g.restore();} else {g.fillStyle=o==='B'&&!placing?'rgba(0,137,123,0.07)':T.powerSoft;g.fillRect(sx,sy,Z+.5,Z+.5);} }
+  const n=isNode(x,y,ORE)?'ore':isNode(x,y,COAL)?'coal':'';
+  if(n){ if(o==='C'){ } else {g.fillStyle=DEEP[n];g.globalAlpha=.16;g.fillRect(sx,sy,Z+.5,Z+.5);g.globalAlpha=1;}
+   if(!(o!=='A'&&occ(x,y))||o==='A'){ if(!occ(x,y)){item(g,n,sx+Z*.14,sy+Z*.14,Z*.42,DEEP[n]);item(g,n,sx+Z*.5,sy+Z*.5,Z*.34,DEEP[n]);} } }
+ }
+ // B: deposit outline, power boundary
+ const edgeOf=(test,col,w,dash)=>{g.strokeStyle=col;g.lineWidth=w;g.setLineDash(dash||[]);g.beginPath();for(let y=0;y<6;y++)for(let x=0;x<NX;x++){if(!test(x,y))continue;const sx=x*Z,sy=y*Z;if(!test(x,y-1)){g.moveTo(sx,sy);g.lineTo(sx+Z,sy);}if(!test(x,y+1)){g.moveTo(sx,sy+Z);g.lineTo(sx+Z,sy+Z);}if(!test(x-1,y)){g.moveTo(sx,sy);g.lineTo(sx,sy+Z);}if(!test(x+1,y)){g.moveTo(sx+Z,sy);g.lineTo(sx+Z,sy+Z);}}g.stroke();g.setLineDash([]);};
+ if(o==='B'){edgeOf((x,y)=>isNode(x,y,ORE),DEEP.ore,2);edgeOf((x,y)=>isNode(x,y,COAL),DEEP.coal,2);if(showCov)edgeOf((x,y)=>y>=0&&y<6&&reach(x,y),T.power,2,[6,4]);}
+ if(o==='C'){ // contour rings around each deposit
+  for(const [L,k] of [[ORE,'ore'],[COAL,'coal']]){const cx=L.reduce((a,b)=>a+b[0]+.5,0)/L.length*Z,cy=L.reduce((a,b)=>a+b[1]+.5,0)/L.length*Z;g.strokeStyle=DEEP[k];g.lineWidth=1.4;for(const r of [.45,.9,1.35].slice(0,L.length>1?3:1)){g.beginPath();g.ellipse(cx,cy,r*Z*(L.length>1?1:1),r*Z*(L.length>1?1.4:1),0,0,7);g.stroke();}
+   for(const [x,y] of L)if(!occ(x,y))item(g,k,x*Z+Z*.3,y*Z+Z*.3,Z*.4,DEEP[k]);}
+ }
+ // belts
+ const beltDraw=(c,bad)=>{const [x,y]=c.t,cx=x*Z+Z/2,cy=y*Z+Z/2,[dx,dy]=c.d;
+  if(o==='C'){ g.strokeStyle=bad?T.bad:T.ink2;g.lineWidth=1.6;g.setLineDash(bad?[4,3]:[]);const px=-dy*Z*.17,py=dx*Z*.17;for(const s of [1,-1]){g.beginPath();g.moveTo(cx-dx*Z/2+px*s,cy-dy*Z/2+py*s);g.lineTo(cx+dx*Z/2+px*s,cy+dy*Z/2+py*s);g.stroke();}g.setLineDash([]);}
+  else { g.strokeStyle=bad?(o==='B'?T.bad:T.beltBad):(o==='B'?'#8d969c':T.belt);g.lineCap=o==='B'?'butt':'round';g.lineWidth=Z*(o==='B'?.3:.4);g.setLineDash(bad&&o==='B'?[Z*.18,Z*.12]:[]);g.beginPath();g.moveTo(cx-dx*Z/2,cy-dy*Z/2);g.lineTo(cx+dx*Z/2,cy+dy*Z/2);g.stroke();g.setLineDash([]);}
+  if(!bad&&o==='A'){g.strokeStyle='rgba(255,255,255,0.7)';g.lineWidth=1;const m=Z*.12;g.beginPath();g.moveTo(cx-dx*m-dy*m,cy-dy*m+dx*m);g.lineTo(cx+dx*m*.6,cy+dy*m*.6);g.lineTo(cx-dx*m+dy*m,cy-dy*m-dx*m);g.stroke();}
+  if(!bad&&o==='B'){g.fillStyle='#ffffff';const m=Z*.09;g.beginPath();g.moveTo(cx+dx*Z*.42-dy*m,cy+dy*Z*.42+dx*m);g.lineTo(cx+dx*Z*.5,cy+dy*Z*.5);g.lineTo(cx+dx*Z*.42+dy*m,cy+dy*Z*.42-dx*m);g.fill();}
+  if(!bad&&o==='C'){g.strokeStyle=T.ink2;g.lineWidth=1.6;const m=Z*.1;g.beginPath();g.moveTo(cx-dx*m-dy*m,cy-dy*m+dx*m);g.lineTo(cx,cy);g.lineTo(cx-dx*m+dy*m,cy-dy*m-dx*m);g.stroke();}
+  if(!bad){const k=x>=6?'ingot':'ore';item(g,k,cx+dx*Z*.22-Z*.13,cy+dy*Z*.22-Z*.13,Z*.26,DEEP[k]);}
+ };
+ CHAIN.forEach(c=>beltDraw(c,false));LOOSE.forEach(c=>beltDraw(c,true));
+ // machines
+ DRILLS.forEach(([x,y])=>drill(g,x*Z,y*Z));SMELT.forEach(([x,y])=>smelter(g,x*Z,y*Z));hub(g);
+ // pole
+ for(const [x,y] of POLE){const cx=x*Z+Z/2,cy=y*Z+Z/2;if(o==='A'){g.fillStyle=T.power;g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.arc(cx,cy,Z*.18,0,7);g.fill();g.stroke();}
+  else {g.fillStyle=o==='B'?T.power:'#fff';g.strokeStyle=T.power;g.lineWidth=2;g.beginPath();g.moveTo(cx,cy-Z*.3);g.lineTo(cx+Z*.24,cy+Z*.22);g.lineTo(cx-Z*.24,cy+Z*.22);g.closePath();g.fill();if(o==='C')g.stroke();else{g.fillStyle='#fff';g.fillRect(cx-1.5,cy-Z*.08,3,Z*.2);}}}
+ // placing a smelter: tiles where it would run now
+ if(placing){for(let y=0;y<6;y++)for(let x=0;x<NX;x++){if(occ(x,y)||isNode(x,y,ORE)||isNode(x,y,COAL))continue;const near=CHAIN.some(c=>Math.abs(c.t[0]-x)+Math.abs(c.t[1]-y)===1)||(x===7&&y>=1&&y<=3);const ready=near&&reach(x,y);const sx=x*Z,sy=y*Z;
+  if(o==='A'){if(ready){g.fillStyle=T.accentSoft;g.beginPath();g.roundRect(sx+Z*.08,sy+Z*.08,Z*.84,Z*.84,Z*.12);g.fill();}g.fillStyle=T.accent;g.globalAlpha=ready?1:.35;g.beginPath();g.arc(sx+Z/2,sy+Z/2,ready?Z*.07:Z*.045,0,7);g.fill();g.globalAlpha=1;}
+  else if(o==='B'){if(ready){g.strokeStyle=T.accent;g.lineWidth=2.5;const a=Z*.12,b=Z*.28,e=Z*.88;g.beginPath();for(const [px,py,sx2,sy2] of [[a,a,1,1],[e,a,-1,1],[a,e,1,-1],[e,e,-1,-1]]){g.moveTo(sx+px,sy+py+sy2*(b-a));g.lineTo(sx+px,sy+py);g.lineTo(sx+px+sx2*(b-a),sy+py);}g.stroke();}}
+  else {g.fillStyle=ready?T.accent:'rgba(35,70,216,0.35)';g.beginPath();g.arc(sx+Z/2,sy+Z/2,ready?3.5:2,0,7);g.fill();}}
+  // hover ghost
+  const [hx,hy]=[7,4];g.globalAlpha=.55;smelter(g,hx*Z,hy*Z);g.globalAlpha=1;g.strokeStyle=T.ink;g.lineWidth=2;g.beginPath();g.roundRect(hx*Z+1,hy*Z+1,Z-2,Z-2,6);g.stroke();}
+}
+const OPTS=[
+ {k:'A',t:'A. Now',why:'Node: a 16% tile tint plus two chunks. Belt: wide grey bar with white chevrons, a broken one goes pale pink. Power reach shows only with a powered machine or pole in hand, as a teal tint. Ready tiles: blue square plus dot; every other free tile a faint dot.'},
+ {k:'B',t:'B. Edges, not fills',pick:true,why:'Deposits get one outline round the whole field in the deep tone, chunks only on free tiles. Belts narrower, darker, one white arrowhead per tile; a broken belt is red and dashed, same as the "not on a belt" mark. Power reach is always faint with a dashed teal edge, stronger in hand. Ready tiles get blue corner brackets, nothing else marked. Poles a teal mast.'},
+ {k:'C',t:'C. Survey lines',why:'The chart look carried all the way: deposits as contour rings, belts as two thin rails with a chevron, power reach as teal hatching, ready tiles a blue dot. Quietest ground and the most "map", but belts and reach go thin at far zoom.'},
+];
+document.fonts.ready.then(()=>{const root=document.getElementById('opts');
+for(const o of OPTS){const d=document.createElement('div');d.className='opt';d.innerHTML=`<h2>${o.t}${o.pick?' <b>(my pick)</b>':''}</h2><p class="why">${o.why}</p>`;
+ const r=document.createElement('div');r.className='row';
+ for(const pl of [false,true]){const w=document.createElement('div');w.innerHTML=`<div class="lab">${pl?'Smelter in hand':'Running'}</div>`;const c=document.createElement('canvas');const dpr=2;c.width=NX*Z*dpr;c.height=NY*Z*dpr;c.style.width=NX*Z/1.03+'px';c.style.height=NY*Z/1.03+'px';const g=c.getContext('2d');g.scale(dpr,dpr);scene(g,o.k,pl);w.append(c);r.append(w);}
+ d.append(r);root.append(d);}});
+</script></body></html>

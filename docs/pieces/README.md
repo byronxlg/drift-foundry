@@ -8,7 +8,7 @@ is applied to `src/theme.js` and `docs/design-system.md`, then the next piece go
 | --- | --- | --- |
 | 1 | Items: colour plus shape (`1-items.png`) | done 2026-11-08: Byron picked C, two tones (#19364881) |
 | 2 | Machines: family silhouettes, output token (`2-machines.png`) | done 2026-11-08: Byron picked B plus C, silhouette per machine with the recipe inside (#19364882) |
-| 3 | Map ground: nodes, belts, power reach, placing | |
+| 3 | Map ground: nodes, belts, power reach, placing (`3-ground.png`) | sent 2026-11-08, A now / B edges not fills / C survey lines (pick B) |
 | 4 | Status marks (known: fresh game marks the next ore node "Fix" while Next says "tap an ore node") | |
 | 5 | Type | |
 | 6 | HUD (known: red "not being made" under the first need before anything is built reads as an error) | |
