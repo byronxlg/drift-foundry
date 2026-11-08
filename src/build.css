@@ -116,7 +116,6 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-o
 .dh h2 { margin: 0; font: 700 var(--t1)/1 var(--fig); }
 .st { margin: 4px 0 0; color: var(--ink2); font-size: var(--t4); font-weight: 600; }
 .st.ok { color: var(--ok); } .st.warn { color: var(--warn); } .st.bad { color: var(--bad); } .st.idle { color: var(--ink2); }
-[data-ds="dark"] .st.warn { color: var(--warn); }
 .rate { margin: 0 0 12px; font-size: var(--t3); line-height: 1.5; } .rate .to { color: var(--ink2); }
 .fix { margin: 0 0 12px; padding: 10px 12px; background: var(--badSoft); border-radius: var(--rc); font-size: var(--t3); line-height: 1.4; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; }

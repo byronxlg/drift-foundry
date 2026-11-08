@@ -1,4 +1,4 @@
-// Drift Foundry builder (preview, ?ui=build): a full-screen top-down map of the rock.
+// Drift Foundry builder: a full-screen top-down map of the rock.
 import * as G from './game.js';
 import * as W from './world.js';
 import { pick, applyCSS, SHAPE, itemSVG } from './theme.js';
@@ -8,7 +8,7 @@ const OLD = 'drift-foundry/save';
 const N = W.N;
 const $ = (sel, el = document) => el.querySelector(sel);
 const params = new URLSearchParams(location.search);
-const TH = { ...pick(params.get('ds')), still: matchMedia('(prefers-reduced-motion: reduce)').matches }; applyCSS(TH);
+const TH = { ...pick(), still: matchMedia('(prefers-reduced-motion: reduce)').matches }; applyCSS(TH);
 const COL = TH.items;
 const T = TH;
 const PATH = Object.fromEntries(Object.entries(SHAPE).map(([k, d]) => [k, new Path2D(d)]));
@@ -41,7 +41,7 @@ function load() {
     try {
       const old = G.deserialize(localStorage.getItem(OLD));
       s = old; W.layOut(s, { ...old.built });
-      sheetQueue.push({ title: 'Your foundry, on the map', body: 'Your list-screen save was laid out on the rock, every machine on a belt to the Hub. The list save is untouched.' });
+      sheetQueue.push({ title: 'Your foundry, on the map', body: 'Your earlier save was laid out on the rock, every machine on a belt to the Hub. The earlier save is untouched.' });
     } catch { fresh(); }
   } else fresh();
   const sum = G.catchUp(s, (Date.now() - s.saved) / 1000);
@@ -326,8 +326,8 @@ function renderDrawer(force) {
       Object.keys(G.UPGRADES).filter((u) => G.isUpgradeUnlocked(s, u)).map((u) => { const U = G.UPGRADES[u];
         return `<div class="up"><div><b>${U.name}</b><span>${U.text}</span></div>${s.upgrades[u] ? '<span class="done">Done</span>' : `<button class="btn" data-a="buy" data-u="${u}" ${G.canAfford(s, U.cost) ? '' : 'disabled'}>${costHTML(U.cost)}</button>`}</div>`; }).join('') + '</div>';
   } else if (drawer === 'menu') {
-    html = `<div class="dh"><div><h2>Drift Foundry</h2><p class="st">Played ${G.fmtTime(s.playSeconds)}. Builder preview.</p></div><button class="x" data-a="close">Close</button></div>
-      ${stockGrid()}<div class="row" style="margin-top:12px"><a class="btn" href="./">List screens</a><button class="btn danger" data-a="reset">New game</button></div>`;
+    html = `<div class="dh"><div><h2>Drift Foundry</h2><p class="st">Played ${G.fmtTime(s.playSeconds)}</p></div><button class="x" data-a="close">Close</button></div>
+      ${stockGrid()}<div class="row" style="margin-top:12px"><button class="btn danger" data-a="reset">New game</button></div>`;
     sig += Math.floor(s.playSeconds);
   }
   if (!force && sig === drawerSig) return;

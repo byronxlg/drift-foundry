@@ -3,9 +3,9 @@
 Asked for by Byron on Telegram (#19364879, 2026-11-08), after the builder preview: "Nice I like
 the concept. Now let's nail down the design system focussing on ui." This file is the system: the
 roles every screen draws from, the map's glyph language, the components, and what is banned. The
-tokens live in `src/theme.js` (one object per direction, read by both the CSS and the canvas).
-Two directions are built on the same structure for Byron to choose from (`?ui=build&ds=a`,
-`&ds=b`); the one he picks becomes the only one.
+tokens live in `src/theme.js` (one object, direction B, read by both the CSS and the canvas).
+Two directions were built on the same structure for Byron to choose from; he picked B, which is
+now the only one and the default screen at `/`.
 
 ## What the before gets wrong
 
@@ -59,7 +59,7 @@ selection. Everything else is ink, a tone step, or an item colour.
 
 ## Roles
 
-Every colour on screen is one of these. Values per direction in `src/theme.js`.
+Every colour on screen is one of these. Values in `src/theme.js`.
 
 | Role | Used for |
 | --- | --- |
@@ -149,7 +149,7 @@ throughout, no tracked capitals, no monospace.
 
 - Spacing on a 4 px step: 4, 8, 12, 16, 24. Phone outer margin 10 (plus safe areas), desktop 16.
 - Touch targets 44 px minimum for every control on a phone.
-- Radii: two values per direction (control, panel) plus fully round for poles and badges.
+- Radii: two values (control, panel) plus fully round for poles and badges.
 - Elevation by tone: map 0, surface 1, raised 2. Shadow only on what floats over the map without
   being docked: drawer on desktop, sheet, toast.
 - Motion: press 90 ms scale 0.97; drawer 180 ms; camera glide 400 ms ease-out; flashes 900 ms.
@@ -170,11 +170,12 @@ terracotta, emoji, monospace, tracked uppercase labels, index numbering, hairlin
 seams, icons in tinted squares, a status dot on every object, decorative shapes, shadows on
 docked panels, more than five type sizes, more than two typefaces.
 
-## Two directions
+## Direction: B, Survey chart (picked by Byron 2026-11-08, #19364880)
 
-Same structure, components and glyph language; different identity.
+B is the only token set. A (Foundry floor, dark) was dropped with its tokens; its description is
+kept below for the record. Both shared the same structure, components and glyph language.
 
-- **A, Foundry floor.** Dark warm graphite, molten orange accent, solid filled silhouettes,
+- **A, Foundry floor (dropped).** Dark warm graphite, molten orange accent, solid filled silhouettes,
   square-ish corners (control 4, panel 6), panels docked flush to the screen edges on a phone.
   Barlow and Barlow Condensed for figures. Reads like a machine on a night shift.
 - **B, Survey chart.** Light: the rock as a printed survey chart on pale cool stone, buildings in
@@ -186,13 +187,12 @@ Same structure, components and glyph language; different identity.
 ## State map
 
 The builder's state map is in `docs/design.md` ("Builder", "State map"); every row there must be
-reachable in both directions with the same controls. Added by this system:
+reachable with the same controls. Added by this system:
 
 | State | Actions | Way forward |
 | --- | --- | --- |
 | Hotbar slot short of cost | Tap: tool selected, toast names the short item | Wait (rate shown in strip), stand by consumers |
 | Focus by keyboard | Tab through HUD, tools, hotbar, drawer | Enter activates, Escape closes drawer or drops tool |
-| Direction switch (preview only) | `?ds=a` / `?ds=b` | Same save, same state |
 | Nothing affordable and nothing producing | Tap ore nodes (always +1 ore, no cost) | Next says "Tap an ore node" whenever no build is affordable and income is zero |
 | Tool in hand, drawer open | Opening a drawer drops the tool; the hint's Done button also drops it | Back to inspect |
 | Deliver | Disabled (tone, ink2 label) until a needed part is in stock; accent when ready | Delivers, segment may close |

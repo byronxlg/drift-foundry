@@ -61,4 +61,4 @@ objectives table above is the whole health check, and rollback lives in `updates
 - Actions runs: `gh run list -R byronxlg/drift-foundry --limit 5`.
 - Pages: `gh api repos/byronxlg/drift-foundry/pages -q .status`.
 - Pacing: `node sim/balance.mjs 15` prints the bot's play time and segment times.
-- Review states without a save: `?demo=1..4`, builder `?ui=build`, design directions `&ds=a|b`.
+- Review states without a save: `?demo=1..4`.

@@ -1,38 +1,23 @@
-// Drift Foundry design system tokens (docs/design-system.md). One object per direction; the CSS
-// reads them as custom properties, the canvas reads them directly. `?ds=a` or `?ds=b` picks one.
+// Drift Foundry design system tokens (docs/design-system.md), direction B "Survey chart". The CSS
+// reads them as custom properties, the canvas reads them directly.
 
-const ITEMS_DARK = {
+const ITEMS = {
   ore: '#e38a60', coal: '#a6acb4', stone: '#cfae78', quartz: '#9ee6e0', ingot: '#e4ebf2', plate: '#5aa6ef',
   wire: '#f0a43c', concrete: '#b9ad9c', silica: '#7ad6b0', frame: '#e889b0', circuit: '#55cc7c', motor: '#c6ec62',
 };
 
-export const THEMES = {
-  a: {
-    name: 'Foundry floor', dark: true,
-    fog: '#0e0d0c', terrain: '#24221f', terrain2: '#272421', next: '#181715', nextNode: 0.16,
-    surface: '#1b1a18', raised: '#2b2825', line: '#34302c',
-    ink: '#f4f0ea', ink2: '#b4ada3', accent: '#ff8a1f', accentInk: '#1c0d00', accentSoft: 'rgba(255,138,31,0.30)',
-    power: '#5ec4ff', powerSoft: 'rgba(94,196,255,0.13)', ok: '#7bd88f', warn: '#ffe14d', bad: '#ff5f4f', badSoft: '#3d1a16',
-    machine: '#4a4540', machineOff: '#2c2925', machineEdge: '#6a645c', belt: '#4b4640', beltBad: '#4a2622', hubBody: '#2e2116',
-    nodeAlpha: 0.2, nodeEdge: null, glyph: 'solid',
-    items: ITEMS_DARK,
-    font: '"Barlow", system-ui, sans-serif', fig: '"Barlow Condensed", "Barlow", system-ui, sans-serif',
-    fonts: 'family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@600;700',
-    rc: 4, rp: 6, scrim: 'rgba(5,4,3,0.62)',
-  },
-  b: {
-    name: 'Survey chart', dark: false,
-    fog: '#b9bfc2', terrain: '#eef0ef', terrain2: '#eef0ef', next: '#cdd2d4', nextNode: 0.3,
-    surface: '#ffffff', raised: '#eef0f1', line: '#dde1e3',
-    ink: '#162026', ink2: '#56616a', accent: '#2346d8', accentInk: '#ffffff', accentSoft: 'rgba(35,70,216,0.24)',
-    power: '#00897b', powerSoft: 'rgba(0,137,123,0.14)', ok: '#18803f', warn: '#c77800', bad: '#d1242f', badSoft: '#fde4e4',
-    machine: '#2c353c', machineOff: '#9aa3a9', machineEdge: '#162026', belt: '#a3acb2', beltBad: '#e7a7a3', hubBody: '#162026',
-    nodeAlpha: 0.32, nodeEdge: '#162026', glyph: 'line',
-    items: ITEMS_DARK,
-    font: '"Archivo", system-ui, sans-serif', fig: '"Archivo Narrow", "Archivo", system-ui, sans-serif',
-    fonts: 'family=Archivo:wght@400;600;700&family=Archivo+Narrow:wght@600;700',
-    rc: 10, rp: 16, scrim: 'rgba(22,32,38,0.45)',
-  },
+export const THEME = {
+  name: 'Survey chart', dark: false,
+  fog: '#b9bfc2', terrain: '#eef0ef', terrain2: '#eef0ef', next: '#cdd2d4', nextNode: 0.3,
+  surface: '#ffffff', raised: '#eef0f1', line: '#dde1e3',
+  ink: '#162026', ink2: '#56616a', accent: '#2346d8', accentInk: '#ffffff', accentSoft: 'rgba(35,70,216,0.24)',
+  power: '#00897b', powerSoft: 'rgba(0,137,123,0.14)', ok: '#18803f', warn: '#c77800', bad: '#d1242f', badSoft: '#fde4e4',
+  machine: '#2c353c', machineOff: '#9aa3a9', machineEdge: '#162026', belt: '#a3acb2', beltBad: '#e7a7a3', hubBody: '#162026',
+  nodeAlpha: 0.32, nodeEdge: '#162026', glyph: 'line',
+  items: ITEMS,
+  font: '"Archivo", system-ui, sans-serif', fig: '"Archivo Narrow", "Archivo", system-ui, sans-serif',
+  fonts: 'family=Archivo:wght@400;600;700&family=Archivo+Narrow:wght@600;700',
+  rc: 10, rp: 16, scrim: 'rgba(22,32,38,0.45)',
 };
 
 // item shapes in a 0..1 box, shared by canvas (Path2D) and DOM (SVG)
@@ -53,7 +38,7 @@ export const SHAPE = {
 export const itemSVG = (k, col, size = 14, edge) =>
   `<svg class="it" width="${size}" height="${size}" viewBox="0 0 1 1" aria-hidden="true"><path d="${SHAPE[k]}" fill="${col}" fill-rule="evenodd"${edge ? ` stroke="${edge}" stroke-width=".07" stroke-linejoin="round"` : ''}/></svg>`;
 
-export function pick(param) { return THEMES[param] || THEMES.a; }
+export function pick() { return THEME; }
 export function applyCSS(t) {
   const r = document.documentElement.style;
   for (const k of ['fog', 'surface', 'raised', 'line', 'ink', 'ink2', 'accent', 'accentInk', 'accentSoft', 'power', 'ok', 'warn', 'bad', 'badSoft', 'machine', 'scrim', 'font', 'fig']) r.setProperty('--' + k, t[k]);
