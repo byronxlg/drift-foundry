@@ -21,7 +21,7 @@ Taken from the lessons of the design system run (bot msg 1559), to be tested her
 
 | # | Decision | Status |
 | --- | --- | --- |
-| 1 | The whole game: how it unfolds over six hours (pacing), not a screen | front half as now; Engine as an efficiency stage, options sent |
+| 1 | The whole game: how it unfolds over six hours (pacing), not a screen | front half as now; Engine as an efficiency stage built from simple pieces, options sent |
 | 2 | First minutes: how a new player learns what to do (the advice line as now, a few guided steps, or nothing) | proposed |
 | 3 | Building: pick a machine, place it, place again, cancel | proposed |
 | 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed |
@@ -113,3 +113,47 @@ machine gives half its cost back, so rebuilding a layout is punished. Options, f
 
 Pick A, with C's full refund in Engine as well since it is one number: recipes give the choices,
 the refund makes trying them free. Numbers and bot times follow his pick.
+
+Byron, 2026-11-09 (#19364903), on those options: "I'm thinking more base components like
+splitters and mergers. Maybe have a look at other incremental game progressions to see how simple
+components can enable creativity in regards to efficiency. I prefer low complexity base with the
+player able to design complex systems from simple base components". So recipes (A above) are set
+aside; the Engine stage is built from a small kit of pieces.
+
+### What other games do
+
+| Game | The base pieces | What turns them into design |
+| --- | --- | --- |
+| shapez | belt, splitter/merger (one balancer), tunnel, then cutter, rotator, stacker, painter | belts carry a fixed amount, so goals at a rate force splitting work across copies; goals are shapes, so the same few pieces are rearranged for each |
+| Factorio | belt, inserter, splitter, underground | belt and inserter speed limits; splitters chained make balancers, a whole player craft built from one piece |
+| Satisfactory | belt, splitter, merger, later smart and programmable splitters (overflow, filter) | belt tiers and exact machine rates: players chase 100% use with manifolds and overflow, and free dismantle makes rebuilding normal |
+| Mindustry | conveyor, junction, router, sorter, overflow gate, bridge | the overflow gate gives priority (feed this first, spare goes on), which most clever layouts lean on |
+| Opus Magnum, Infinifactory | a handful of arms and parts | no new parts late; each puzzle is scored on cost, time and size against everyone else, so the challenge is doing better, not more |
+
+The pattern: the kit stays small and arrives early, and efficiency comes from a limit the pieces
+work against (a line that carries only so much) plus a goal that rewards a better layout (a rate
+held, or a score). Today neither exists here: a machine already shares its output over any number
+of lines and a line carries any amount (`src/world.js` `send`), so a splitter or merger would do
+nothing until lines have a limit.
+
+### Options, drawn
+
+![Engine: simple pieces](1-pieces.png)
+
+Drawn with `docs/ux/1-pieces.py`.
+
+- A: as now. Any number of lines, any amount; building more is the only lever.
+- B: two pieces. A line carries a set amount (about one item a second) and a machine has one line
+  out. Merger joins up to three lines into one; splitter shares one line out to up to three, and
+  skips a side that is full, so what is placed first is fed first. (pick)
+- C: three pieces, B plus an overflow: it fills its first line and sends only the spare on.
+
+B and C both: one piece opens per ring part on the way to Engine (splitter with Spine, merger with
+Lattice, overflow in C with Nerve) and the advice line shows it once. In Engine the goal becomes
+motors a minute held for ten minutes rather than a pile, and demolishing in Engine refunds the full
+cost, so a better layout is worth building and rebuilding is free.
+
+Pick B: the smallest kit that still lets a player design. A splitter that skips a full side gives
+most of what an overflow does, so C's third piece can follow later if play shows it is missed.
+After the pick: line capacity and pieces in `src/world.js`, auto-link and the bot taught to use
+them, then the bot checks the front half still lands Engine at about 1 h 46 m.
