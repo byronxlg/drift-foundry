@@ -79,7 +79,8 @@ export const isBuildingUnlocked = (s, b) => BUILDINGS[b].phase <= unlockedPhase(
 export const isUpgradeUnlocked = (s, u) => UPGRADES[u].phase <= unlockedPhase(s);
 
 export function buildingCost(s, b) {
-  const n = s.built[b];
+  // In the builder, s.placed counts what is on the map; s.built is what is connected and powered.
+  const n = s.placed ? s.placed[b] : s.built[b];
   const out = {};
   for (const [k, v] of Object.entries(BUILDINGS[b].cost)) out[k] = Math.ceil(v * COST_GROWTH ** n);
   return out;
