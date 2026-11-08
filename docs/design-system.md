@@ -186,8 +186,8 @@ throughout, no tracked capitals, no monospace.
 ## Components
 
 HUD (goal ring, segment name, power, needs row, Next, Deliver; each need is name, count and bar, no status line under it, piece 8 C); dock (tools, stock strip, hotbar);
-hotbar card (silhouette icon, name, owned count, cost, stacked; piece 9, Byron picked A, as now); drawer (inspect, stock, research, menu);
-sheet; toast; hint. Each component has rest, pressed, focus (2 px focus ring in ink), disabled
+hotbar card (silhouette icon, name, owned count, cost, stacked; piece 9, Byron picked A, as now); drawer (inspect, stock, research, menu; piece 10, Byron picked B: on a phone it rises from the bottom edge over the machine buttons with a grab bar, the map glides so the tapped machine sits above it, small headings in sentence case; side panel on desktop, kept clear of the dock);
+sheet; toast (just above the drawer on a phone while one is open); hint. Each component has rest, pressed, focus (2 px focus ring in ink), disabled
 and, where it applies, selected and short-of-cost states.
 
 ## Banned (taste `tells.md`, applied to an app)

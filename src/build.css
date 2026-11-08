@@ -108,7 +108,14 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-o
 .drawer { position: fixed; z-index: 5; left: 0; right: 0; bottom: var(--dock, 0px); max-height: min(46dvh, 420px); overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y;
   background: var(--surface); border-radius: var(--rp) var(--rp) 0 0; padding: 16px calc(var(--sar) + 16px) 16px calc(var(--sal) + 16px);
   box-shadow: 0 -10px 30px rgba(0, 0, 0, .3); }
-@media (min-width: 900px) { .drawer { left: auto; right: 16px; bottom: auto; top: 16px; width: 380px; border-radius: var(--rp); max-height: calc(100dvh - 32px - 170px); } }
+/* piece 10 B: on a phone the panel comes up from the bottom edge over the machine buttons, with a grab bar;
+   the map glides so the tapped machine sits above it, and short messages show just above it */
+@media (max-width: 899px) {
+  .drawer { bottom: 0; padding-bottom: calc(var(--sab) + 16px); }
+  .drawer::before { content: ''; display: block; width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: -8px auto 10px; }
+  body.drawn .toast { top: auto; bottom: calc(var(--drawer, 0px) + 12px); }
+}
+@media (min-width: 900px) { .drawer { left: auto; right: 16px; bottom: auto; top: 16px; width: 380px; border-radius: var(--rp); max-height: calc(100dvh - 32px - var(--dock, 186px)); } }
 .dh { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .dh .ic { width: 40px; height: 40px; }
 .dh > div { flex: 1; }
@@ -145,7 +152,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-o
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
 /* supply lines in the inspect drawer (piece 4) */
-.lh { margin: 12px 0 4px; font: 700 var(--t5)/1 var(--font); color: var(--ink2); text-transform: uppercase; letter-spacing: .04em; }
+.lh { margin: 12px 0 4px; font: 700 var(--t4)/1.2 var(--font); color: var(--ink2); }
 .lines { list-style: none; margin: 0 0 8px; padding: 0; }
 .lines li { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 8px; min-height: 40px; border-bottom: 1px solid var(--line); font-size: var(--t3); }
 .lines li .it { margin: 0; }
