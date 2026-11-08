@@ -161,16 +161,36 @@ function status(it) {
 }
 function lineStatus(it, B) {
   const st = s.stats; const ws = W.stat(it); const k = W.outItem(it.b); const nm = (x) => G.ITEMS[x].name.toLowerCase();
-  if (it.need === 'noout') return ['No line out', 'bad'];
-  if (it.need.startsWith('noin:')) return [`No ${nm(it.need.slice(5))} line in`, 'warn'];
+  if (it.need === 'noout') return ['Output piling up: no line out', 'warn'];
+  if (it.need.startsWith('noin:')) return [`Short of input: no ${nm(it.need.slice(5))} line in`, 'warn'];
   if (B.gen) return B.in.coal && ws.u <= 0.01 && st.demand > G.CORE_MW && (it.buf.coal || 0) < 0.5 ? ['No coal reaching it', 'bad'] : [`Running, up to ${B.gen} MW`, 'ok'];
   if (st.powerFactor < 0.98 && it.b !== 'coaldrill') return [`Power short, running at ${Math.floor(st.powerFactor * 100)}%`, 'warn'];
-  if (k && it.held >= W.HOLD * B.out[k] - 1e-6) return [`Backed up: nothing takes its ${nm(k)}`, 'warn'];
+  if (k && it.held >= W.HOLD * B.out[k] - 1e-6) return [`Output piling up: nothing takes its ${nm(k)}`, 'warn'];
   const worst = Object.keys(B.in).map((x) => [x, (ws.get[x] || 0) / W.want(s, it, x)]).sort((a, b) => a[1] - b[1])[0];
-  if (worst && worst[1] < 0.9 && ws.u < 0.9) return [`Starved: getting ${Math.floor(worst[1] * 100)}% of the ${nm(worst[0])} it wants`, 'warn'];
+  if (worst && worst[1] < 0.9 && ws.u < 0.9) return [`Short of input: getting ${Math.floor(worst[1] * 100)}% of the ${nm(worst[0])} it wants`, 'warn'];
   return ['Running', 'ok'];
 }
 const stColour = { ok: T.ok, warn: T.warn, bad: T.bad, idle: T.mute };
+// piece 6: line trouble shows on the line. 'piling' (output piling up, line or no line) or
+// 'short' with the item it is short of ('' when it has no line in for it at all); null when fine
+function trouble(it) {
+  if (it.st !== 'on') return null;
+  const B = G.BUILDINGS[it.b]; const k = W.outItem(it.b);
+  if (it.need === 'noout' || (k && !B.gen && it.held >= W.HOLD * B.out[k] - 1e-6)) return { kind: 'piling', k };
+  if (it.need.startsWith('noin:')) return { kind: 'short', k: it.need.slice(5), none: true };
+  const [txt, cls] = lineStatus(it, B);
+  if (cls === 'bad' && txt.startsWith('No coal')) return { kind: 'short', k: 'coal' };
+  if (txt.startsWith('Short of input')) {
+    const ws = W.stat(it); const worst = Object.keys(B.in).map((x) => [x, (ws.get[x] || 0) / W.want(s, it, x)]).sort((a, b) => a[1] - b[1])[0];
+    return { kind: 'short', k: worst[0] };
+  }
+  return null;
+}
+const troubleMemo = new Map(); // cleared each frame in draw(): lines and machines both ask
+function troubleOf(it) {
+  if (!troubleMemo.has(it)) troubleMemo.set(it, trouble(it));
+  return troubleMemo.get(it);
+}
 
 // ---------- advice ----------
 const producerOf = {};
@@ -573,6 +593,7 @@ function hatchPattern() {
   g.stroke(); hatch = { dpr, p: ctx.createPattern(c, 'repeat') }; return hatch.p;
 }
 function draw(now) {
+  troubleMemo.clear(); queues.length = 0;
   const d = W.derived(s); const z = cam.z; const R = d.R;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.fillStyle = TH.fog; ctx.fillRect(0, 0, vw, vh);
@@ -652,6 +673,7 @@ function draw(now) {
     if (x < x0 || x > x1 || y < y0 || y > y1) continue;
     drawBuilding(it, ...toScreen(x, y), z, now);
   }
+  drawQueues();
   for (const p of s.world.poles) {
     const [px, py] = centre(p); const live = d.live.has(p);
     ctx.fillStyle = live ? TH.power : TH.machineOff; ctx.strokeStyle = TH.dark ? TH.fog : '#ffffff'; ctx.lineWidth = 2;
@@ -665,7 +687,7 @@ function draw(now) {
     if (nextMark.b) { ctx.globalAlpha = 0.55; drawMachine(ctx, nextMark.b, px, py, z, {}); ctx.globalAlpha = 1; }
     const pulse = TH.still ? 0 : (Math.sin(now / 400) + 1) / 2;
     ctx.strokeStyle = TH.accent; ctx.lineWidth = 2.5 + pulse * 1.5; rr(px - 3, py - 3, z + 6, z + 6, z * 0.26); ctx.stroke();
-    if (z >= 18) { const lab = nextMark.b ? 'Next' : 'Fix'; ctx.font = `700 ${Math.max(11, z * 0.36)}px ${BAND}`; const tw = ctx.measureText(lab).width + 10;
+    if (z >= 18) { const lab = 'Next'; ctx.font = `700 ${Math.max(11, z * 0.36)}px ${BAND}`; const tw = ctx.measureText(lab).width + 10;
       ctx.fillStyle = TH.accent; rr(px + z / 2 - tw / 2, py - z * 0.5 - 6, tw, Math.max(15, z * 0.46), 4); ctx.fill();
       ctx.fillStyle = TH.accentInk; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(lab, px + z / 2, py - z * 0.5 - 6 + Math.max(15, z * 0.46) / 2 + 1); ctx.textBaseline = 'alphabetic'; }
   }
@@ -701,17 +723,22 @@ function drawLines(now, x0, x1, y0, y1) {
     const path = W.route(s, l); if (!vis(path)) continue;
     const src = s.world.items[d.occ[l.a]]; if (!src) continue;
     const pts = [path[0], path.find((j, k) => k > 0 && k < path.length - 1 && (j % N) === (path[path.length - 1] % N)) ?? path[0], path[path.length - 1]].map(ctr);
-    drawn.push([l, pts, W.outItem(src.b)]);
-    ctx.strokeStyle = TH.supply; ctx.lineWidth = Math.max(1.5, z * 0.09);
-    ctx.beginPath(); pts.forEach(([px, py], k) => (k ? ctx.lineTo(px, py) : ctx.moveTo(px, py))); ctx.stroke();
+    const k = W.outItem(src.b); const dst = l.b === W.HUBT ? null : s.world.items[d.occ[l.b]];
+    const tu = troubleOf(src); const td = dst && troubleOf(dst);
+    const piling = tu && tu.kind === 'piling'; const short = td && td.kind === 'short' && td.k === k;
+    drawn.push([l, pts, k, piling]);
+    ctx.strokeStyle = piling || short ? TH.warn : TH.supply; ctx.lineWidth = Math.max(1.5, z * (piling || short ? 0.13 : 0.09));
+    if (short) ctx.setLineDash([z * 0.14, z * 0.14]);
+    ctx.beginPath(); pts.forEach(([px, py], j) => (j ? ctx.lineTo(px, py) : ctx.moveTo(px, py))); ctx.stroke(); ctx.setLineDash([]);
+    if (piling) queue(src.b, pts[0], pts[1][0] === pts[0][0] && pts[1][1] === pts[0][1] ? pts[2] : pts[1], z);
   }
   const hi = drawer === 'inspect' && sel >= 0 && d.occ[sel] >= 0 ? sel : -1; // the inspected machine's lines, on top
   if (hi >= 0) for (const [l, pts] of drawn) if (l.a === hi || l.b === hi) {
     ctx.strokeStyle = TH.accent; ctx.lineWidth = Math.max(2.5, z * 0.13);
     ctx.beginPath(); pts.forEach(([px, py], k) => (k ? ctx.lineTo(px, py) : ctx.moveTo(px, py))); ctx.stroke();
   }
-  for (const [l, pts, k] of drawn) {
-    const r = W.stat(l).r; if (r < 0.02 || z < 14) continue;
+  for (const [l, pts, k, piling] of drawn) {
+    const r = W.stat(l).r; if (piling || r < 0.02 || z < 14) continue;
     let len = 0; const seg = []; for (let j = 1; j < pts.length; j++) { const L = Math.hypot(pts[j][0] - pts[j - 1][0], pts[j][1] - pts[j - 1][1]); seg.push(L); len += L; }
     if (len < 1) continue;
     const gap = Math.max(z * 0.6, z / r); const off = TH.still ? 0 : ((now / 1000) * z * 1.2) % gap; const sz = z * 0.3;
@@ -803,24 +830,43 @@ function drawBuilding(it, sx, sy, z, now) {
   const running = it.st === 'on' && (s.stats.util[it.b] ?? 0) > 0.05;
   const t = TH.still ? 0 : now / 1000 * (running ? G.speed(s, it.b) * s.stats.powerFactor : 0);
   drawMachine(ctx, it.b, sx, sy, z, { off: it.st === 'off' || it.st === 'nopower', running, t });
-  // status marks, only when something needs the player; each has its own shape
-  const r = Math.max(4.5, z * 0.17); const bx = sx + z * 0.84; const by = sy + z * 0.16;
-  if (it.st !== 'off' && it.need === 'noout') { // broken outline
-    ctx.strokeStyle = TH.bad; ctx.lineWidth = Math.max(2, z * 0.08); ctx.setLineDash([z * 0.22, z * 0.12]);
-    ctx.beginPath(); ctx.roundRect(sx + 1, sy + 1, z - 2, z - 2, z * 0.18); ctx.stroke(); ctx.setLineDash([]);
-  } else if (it.st === 'nopower') {
-    ctx.fillStyle = TH.bad; ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(bx + r * 0.2, by - r * 0.7); ctx.lineTo(bx - r * 0.4, by + r * 0.1); ctx.lineTo(bx, by + r * 0.1); ctx.lineTo(bx - r * 0.2, by + r * 0.7); ctx.lineTo(bx + r * 0.4, by - r * 0.1); ctx.lineTo(bx, by - r * 0.1); ctx.fill();
-  } else if (it.st === 'off') {
-    ctx.fillStyle = TH.surface; ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = TH.ink2; ctx.fillRect(bx - r * 0.42, by - r * 0.45, r * 0.3, r * 0.9); ctx.fillRect(bx + r * 0.12, by - r * 0.45, r * 0.3, r * 0.9);
-  } else {
-    const [, cls] = status(it);
-    if ((cls === 'warn' && s.stats.powerFactor >= 0.98 && (s.stats.util[it.b] ?? 0) < 0.5) || cls === 'bad') { // starved or no coal: triangle notch
-      ctx.fillStyle = cls === 'bad' ? TH.bad : TH.warn; ctx.strokeStyle = TH.dark ? TH.fog : TH.ink; ctx.lineWidth = 1.2;
-      ctx.beginPath(); ctx.moveTo(bx, by - r); ctx.lineTo(bx + r, by + r * 0.75); ctx.lineTo(bx - r, by + r * 0.75); ctx.closePath(); ctx.fill(); ctx.stroke();
-    }
+  // machine marks only for the machine's own trouble (piece 6); line trouble is drawn on the line
+  const r = Math.max(5, z * 0.2); const bx = sx + z * 0.84; const by = sy + z * 0.16;
+  if (it.st === 'nopower' || it.st === 'off') {
+    const off = it.st === 'off';
+    ctx.fillStyle = off ? TH.surface : TH.bad; ctx.strokeStyle = off ? TH.ink2 : '#ffffff'; ctx.lineWidth = Math.max(1.5, z * 0.035);
+    ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    if (off) { ctx.fillStyle = TH.ink2; ctx.fillRect(bx - r * 0.42, by - r * 0.45, r * 0.3, r * 0.9); ctx.fillRect(bx + r * 0.12, by - r * 0.45, r * 0.3, r * 0.9); }
+    else { ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(bx + r * 0.2, by - r * 0.7); ctx.lineTo(bx - r * 0.4, by + r * 0.1); ctx.lineTo(bx, by + r * 0.1); ctx.lineTo(bx - r * 0.2, by + r * 0.7); ctx.lineTo(bx + r * 0.4, by - r * 0.1); ctx.lineTo(bx, by - r * 0.1); ctx.fill(); }
+    return;
   }
+  const tr = troubleOf(it); if (!tr) return;
+  const c = [sx + z / 2, sy + z / 2];
+  if (tr.kind === 'short' && tr.none) { const [dx, dy] = side(it, -1); queues.push([null, c, [c[0] + dx * z, c[1] + dy * z], z, 'in']); } // a dashed amber stub on the way in
+  if (tr.kind === 'piling' && it.need === 'noout') { const [dx, dy] = side(it, 1); queue(it.b, c, [c[0] + dx * z, c[1] + dy * z], z, 'out'); } // nowhere to go: queued at the door
+}
+// which side a stub leaves by: a free tile first, toward the Hub (out) or away from it (in); never into the Hub
+function side(it, toHub) {
+  const d = W.derived(s); const x = it.i % N; const y = (it.i / N) | 0; const hx = (W.C - x) * toHub; const hy = (W.C - y) * toHub;
+  const sides = [[1, 0], [-1, 0], [0, 1], [0, -1]].sort((p, q) => (q[0] * hx + q[1] * hy) - (p[0] * hx + p[1] * hy));
+  const at = ([dx, dy]) => d.occ[(y + dy) * N + x + dx]; const open = sides.filter((v) => at(v) !== -2);
+  return open.find((v) => at(v) === -1) || open[0];
+}
+// output piling up: three of the machine's items queued on the way out, toward 'to'; drawn after
+// the machines so a neighbour never hides them. With no line out, an amber stub is the way out.
+const queues = [];
+function queue(b, from, to, z, stub) { const k = W.outItem(b); if (k && z >= 14) queues.push([k, from, to, z, stub]); } // stub: 'out' (no line out) or 'in' (no line in, no items)
+function drawQueues() {
+  for (const [k, from, to, z, stub] of queues) {
+    const L = Math.hypot(to[0] - from[0], to[1] - from[1]) || 1; const ux = (to[0] - from[0]) / L; const uy = (to[1] - from[1]) / L; const sz = z * 0.28;
+    if (stub) { ctx.strokeStyle = TH.warn; ctx.lineWidth = Math.max(2, z * 0.13); ctx.lineCap = 'round'; if (stub === 'in') ctx.setLineDash([z * 0.1, z * 0.12]);
+      ctx.beginPath(); ctx.moveTo(from[0] + ux * z * 0.5, from[1] + uy * z * 0.5); ctx.lineTo(from[0] + ux * z * (stub === 'in' ? 1.1 : 1.45), from[1] + uy * z * (stub === 'in' ? 1.1 : 1.45)); ctx.stroke(); ctx.setLineDash([]); }
+    if (!k) continue;
+    for (let j = 2; j >= 0; j--) { const f = 0.66 + j * 0.34; const px = from[0] + ux * z * f; const py = from[1] + uy * z * f;
+      if (stub) { ctx.fillStyle = TH.terrain; ctx.strokeStyle = TH.warn; ctx.lineWidth = Math.max(1.5, z * 0.05); ctx.beginPath(); ctx.arc(px, py, sz * 0.66, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); } // clear of whatever is under it
+      drawItem(ctx, k, px - sz / 2, py - sz / 2, sz); }
+  }
+  queues.length = 0;
 }
 
 // ---------- loop ----------

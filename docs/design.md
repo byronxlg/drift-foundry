@@ -114,7 +114,7 @@ goal and lives in the HUD; the factory is what you look at.
 | First open | The Hub on an ore field; advice "Tap an ore node to dig; 10 ore buys a drill" |
 | Placing | Valid tiles lit on the map; the chosen card in the build bar |
 | Factory running | Items moving along supply lines; segment bar in the HUD |
-| No line out / no power | The machine itself: dashed red outline, or dark with a bolt; advice names the fix |
+| Line trouble / no power | Line trouble on the line (amber dashed in, amber queue out); no power on the machine, dark with a bolt; advice names the fix |
 | Inspect | The tile ringed; drawer with status, rate, stand by, demolish |
 | Map grows | Sheet names what was surveyed; camera eases out to show the new ring |
 
@@ -155,7 +155,7 @@ Panels are `#1b2127` at 94% over the map, radius 10, no shadows except sheets.
 | Line drawing | See the Supply lines state map | |
 | No power | Dark machine with bolt; inspect says "Outside power reach" | Advice opens the pole tool; reach tint shows where |
 | Power short | Power meter red; machines run slower | Advice names the generator |
-| Starved | Amber dot; inspect names the short input | Advice walks upstream to the build |
+| Short of input | The line in goes amber and dashed; inspect names the short input | Advice walks upstream to the build |
 | Inspect | Stand by / start, demolish (refund shown), close | Back to the map; nothing locks |
 | Demolish | Remove tool or inspect; refund half | Tile free again |
 | Deliver | HUD Deliver button | Segment closes, sheet, map grows |
@@ -221,11 +221,11 @@ and the same save key carries preview progress on.
 | Line tool, nothing chosen | Tap or press a machine with an output; tap the Hub (toast: lines end at the Hub) | Source chosen, valid targets lit |
 | Source chosen | Tap or drag to a lit target; tap the source again or Done to cancel; pan with two fingers | Line laid, it routes itself, source stays chosen for the next link |
 | Invalid target | Toast says why (does not use ore / same machine / already linked / empty rock) | Lit targets stay lit; pick one |
-| New machine, no line out | Dashed outline; inspect "No line out"; advice opens the line tool on it | One line to the Hub or a consumer |
-| Maker with an input that has no line in | Amber mark; inspect "No ore line in" | Advice opens the line tool on the nearest producer of it |
-| Starved (getting under 90% of wanted) | Amber mark; inspect lists wanted vs getting per input | Link another producer, or build one (advice) |
-| Backed up (held output full) | Amber mark; inspect "Backed up: nothing takes its ingot" | Line to the Hub or another consumer |
-| Generator with no fuel line | Amber mark; inspect "No coal line in" | Advice opens the line tool on the nearest coal drill, or builds one |
+| New machine, no line out | Output piling up: amber stub with its output queued; inspect "Output piling up: no line out"; advice opens the line tool on it | One line to the Hub or a consumer |
+| Maker with an input that has no line in | Dashed amber stub on the way in; inspect "Short of input: no ore line in" | Advice opens the line tool on the nearest producer of it |
+| Short of input (getting under 90% of wanted) | That line in amber and dashed; inspect lists wanted vs getting per input | Link another producer, or build one (advice) |
+| Output piling up (held output full) | Line out amber, output queued at the door; inspect "Output piling up: nothing takes its ingot" | Line to the Hub or another consumer |
+| Generator with no fuel line | Dashed amber stub on the way in; inspect "Short of input: no coal line in" | Advice opens the line tool on the nearest coal drill, or builds one |
 | Hub gets none of an item it needs (cost or segment) | Needs row reads "none reaching the Hub" | Advice: line from a producer of it to the Hub |
 | Inspect a machine | Lines in and out with their rate, remove any; stand by; demolish | Back to the map |
 | Remove tool on a line | Removes the top line on that tile | Producers re-split at once |
