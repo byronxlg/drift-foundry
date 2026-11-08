@@ -19,9 +19,9 @@ canvas{display:block;border-radius:12px;width:1008px;height:432px}
 </style></head><body>
 <div class="h"><p class="prog">Piece 6 of 10. Done: items, machines, supply lines, ground, power.</p>
 <h1>Problem marks</h1>
-<p>Redrawn after your note: output piling up is a line problem, not a machine problem. So trouble shows where it is: on the machine only when the machine itself is the problem, on the line when a line is. Same machines in each: one running fine, then each kind of trouble.</p></div>
+<p>Kept to the basics, after your note. Five states, nothing more. No line out is not its own thing: the output just piles up, the same as when the line out is full.</p></div>
 <div id="opts"></div>
-<div class="f">My pick: <b>B</b>. You look at the thing that needs fixing: a machine mark means fix the machine (power, or turn it back on), a coloured line means fix the lines.</div>
+<div class="f">Machine marks only for machine trouble (no power, stood by). Line trouble shows on the line. Reply yes and it goes in the game.</div>
 <script type="module">
 import { THEME as TH, SHAPE } from '../../src/theme.js';
 import * as G from '../../src/game.js';
@@ -36,7 +36,7 @@ const Z = 72, NX = 14, NY = 6, W = NX * Z, H = NY * Z;
 const ctr = (x, y) => [x * Z + Z / 2, y * Z + Z / 2];
 // the row: [machine, x, y, state, words under it]
 const ROW = [['smelter', 1.1, 0.6, 'ok', 'running'], ['press', 4.5, 0.6, 'starved', 'short of input'], ['drawer', 7.9, 0.6, 'nopower', 'no power'],
-  ['kiln', 1.1, 3.4, 'noout', 'no line out'], ['smelter', 4.5, 3.4, 'backed', 'output piling up'], ['press', 7.9, 3.4, 'off', 'stood by']];
+  ['smelter', 1.1, 3.4, 'backed', 'output piling up'], ['press', 4.5, 3.4, 'off', 'stood by']];
 const ORE = [[11, 2], [12, 2], [11, 3], [12, 3], [13, 3], [12, 4]];
 const IN = { smelter: [0, 1], press: [3, 1], drawer: [6, 1], kiln: [9, 1] }; // where each input line comes from (one tile left)
 
@@ -112,17 +112,15 @@ function draw(g, opt) {
   chip(g, 12, 2, opt === 'A' ? 'Fix' : 'Next');
 }
 const OPTS = [
-  ['A', 'As now. Every kind of trouble is a mark on the machine, even when the machine is fine and the problem is its lines.'],
-  ['B', 'Trouble shows where it is. A machine only gets a mark for its own trouble: no power (red bolt) or stood by (grey pause). Short of input: the line coming in goes amber and dashed. Output piling up: the line going out goes amber with items queued on it. No line out: items heap at its door and a red dashed stub shows where a line should go. The first tap says Next.', true],
-  ['C', 'B, plus a short bar on the side of the machine the trouble is on (left for input, right for output), so it still shows when you zoom right out and the lines get thin.'],
+  ['', 'Running: plain lines, items moving. Short of input: the line coming in goes amber and dashed. Output piling up: items queue on the way out in amber, whether or not there is a line. No power: red bolt on the machine. Stood by: grey pause on the machine. The first tap on a fresh game says Next.'],
 ];
 await document.fonts.load('700 17px "Archivo Narrow"'); await document.fonts.load('600 20px Archivo');
 for (const [k, txt, pick] of OPTS) {
   const sec = document.createElement('section'); sec.className = 'opt';
-  sec.innerHTML = `<h2>${k}${pick ? '<span class="pick">My pick</span>' : ''}</h2><p>${txt}</p>`;
+  sec.innerHTML = `<p>${txt}</p>`;
   const cv = document.createElement('canvas'); cv.width = W * 2; cv.height = H * 2; sec.append(cv);
   document.getElementById('opts').append(sec);
-  const g = cv.getContext('2d'); g.scale(2, 2); draw(g, k);
+  const g = cv.getContext('2d'); g.scale(2, 2); draw(g, 'B');
 }
 document.body.dataset.ready = '1';
 </script></body></html>
