@@ -74,13 +74,14 @@ Every colour on screen is one of these. Values in `src/theme.js`.
 | `warn`, `bad` | starved / power short; disconnected / no power / no coal |
 | `machine`, `machineOff` | building body; stood-by or unpowered body |
 | `belt` | belts |
-| 12 item colours | items only: swatches, belt cargo, output tokens, node patches |
+| 12 item hues, two tones each | items only. Deep (`items`): swatches, belt cargo, node patches, anything on the chart or a panel. Light (`itemsOn`): output tokens and cycle bars on machine bodies |
 
 Separation: A's accent is orange and its warn is yellow, and their marks differ in shape
 (accent is never a mark on a machine). B's accent is cobalt, its bad is red.
 
-Contrast floor: ink on surface 7:1, ink2 on surface 4.5:1, accentInk on accent 7:1, every item
-colour 3:1 against `machine` (it sits on buildings) and against `terrain` (node patches).
+Contrast floor: ink on surface 7:1, ink2 on surface 4.5:1, accentInk on accent 7:1, deep item
+tones 5:1 or better on `terrain` and `surface`, light item tones 6:1 or better on `machine`
+(`docs/pieces/1-items-palette.py` generates both to target luminance and prints the ratios).
 
 ## Items
 
@@ -102,13 +103,16 @@ token, node patch). One drawing function feeds both the DOM (inline SVG) and the
 | circuit | chip (square with legs) |
 | motor | rotor (circle with a cross) |
 
-Raw items keep earthy colours; refined and parts get distinct hues so no two greys sit side by
-side: coal near-black with a light edge, ingot steel blue-white, stone sand, concrete warm grey
-(shape block, so never confused with stone's chunk).
+Piece 1, Byron's pick C (2026-11-08, #19364881): one hue per item in two strengths, no outlines.
+Deep on paper (chart, panels, belts), light on machines (tokens, cycle bars); the colour is the
+same item everywhere, only its strength follows the ground. Node patches are the deep tone at
+16% alpha. Raw items keep earthy hues; refined and parts get distinct hues so no two greys sit
+side by side: coal near-black, ingot slate blue, stone sand, concrete warm grey (shape block, so
+never confused with stone's chunk).
 
 ## Map glyph language
 
-- Building = family silhouette in `machine`, the output token in the item colour on top.
+- Building = family silhouette in `machine`, the output token in the light item tone on top.
   Generators carry a bolt in `power`. Hub: 3x3, accent keyline, the five-segment ring inside.
 - Families: extractor (circle with a bit that turns when running), furnace (square with a
   chimney notch top-right; the output token brightens when running, no glow), maker (square with
@@ -128,7 +132,7 @@ side: coal near-black with a light edge, ingot steel blue-white, stone sand, con
   why. Power reach is a `powerSoft` fill on the covered tiles, no circles (twenty overlapping circles read as a web of lines).
 - Rings: the selected tile gets an `ink` ring; the tile Next points at gets a one-off `accent`
   flash that expands and fades. The two never look alike.
-- Nodes: a patch in the item colour at low alpha plus two or three chunks in the item's shape.
+- Nodes: a patch in the deep item tone at 16% alpha plus two chunks in the item's shape.
 
 ## Type
 
