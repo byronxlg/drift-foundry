@@ -21,7 +21,7 @@ Taken from the lessons of the design system run (bot msg 1559), to be tested her
 
 | # | Decision | Status |
 | --- | --- | --- |
-| 1 | The whole game: the five segments from start to finish, what each needs and opens, and where the player sees that road | drawn (`1-road.png`), waiting on his pick |
+| 1 | The whole game: how it unfolds over six hours (pacing), not a screen | front half as now; Engine as an efficiency stage, options sent |
 | 2 | First minutes: how a new player learns what to do (the advice line as now, a few guided steps, or nothing) | proposed |
 | 3 | Building: pick a machine, place it, place again, cancel | proposed |
 | 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed |
@@ -93,3 +93,23 @@ only (what each part asks for, when two research open); C needs a new come-back 
 the pick, the parts are retuned and the bot checks the times.
 
 Drawn with `docs/ux/1-progression.py`.
+
+Byron, 2026-11-09 (#19364902), on 1-progression.png: "I like the idea of getting to engine
+quickly. But we need some creative freedom enabled so people can work on efficiency for the last
+4 hours."
+
+So the front half stays as A (Engine reached at about 1 h 46 m), and the last four hours become
+an efficiency stage instead of more of the same. Today in Engine the only levers are more
+machines (each costs 13% more than the last), the Line balancing research, and removing a
+machine gives half its cost back, so rebuilding a layout is punished. Options, for his pick:
+
+- A: other recipes. Engine opens two or three second ways to make the same part (a motor from
+  plates and wire with no ingots; circuits with more wire and no silica). Each is cheaper in one
+  thing and dearer in another, so the best mix depends on the player's map. (pick)
+- B: rate goals. Engine asks for a rate held, not a pile: motors a minute kept up for ten
+  minutes. A tidier factory finishes sooner; the end screen keeps the best time.
+- C: free rebuild. In Engine, removing a machine gives its full cost back and the map opens
+  wider with richer patches further out, so tearing down and laying out again pays.
+
+Pick A, with C's full refund in Engine as well since it is one number: recipes give the choices,
+the refund makes trying them free. Numbers and bot times follow his pick.
