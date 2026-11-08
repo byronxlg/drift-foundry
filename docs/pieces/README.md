@@ -13,7 +13,7 @@ is applied to `src/theme.js` and `docs/design-system.md`, then the next piece go
 | 5 | Power: how reach shows (`5-power.png`): A teal squares while placing or tapping a generator (now) / B one soft teal area with a smooth edge / C the same area plus a thin wire from each pole to what powers it, always on (pick C) | done 2026-11-09: Byron picked A (#19364889), power stays as now: teal squares only while placing or tapping a generator |
 | 6 | Status marks (`6-status.png`), cut to the basics at Byron's word (#19364891): five states, running / short of input (line in amber, dashed) / output piling up (items queue out in amber, line or no line; no separate no-line-out state) / no power (red bolt) / stood by (grey pause); first tap says Next | done 2026-11-09: Byron said yes (#19364892); in the game, `6-status-live.png` |
 | 7 | Type (`7-type.png`, the real phone HUD per option): A as now, two fonts, five sizes / B goal numbers bigger, the two smallest sizes merged, four sizes / C one plain font (pick B) | done 2026-11-09: Byron picked C (#19364893), one plain font (Archivo) for words and figures, sizes as now; the stock strip scrolls, so long numbers are not cut off for good |
-| 8 | HUD (known: red "not being made" under the first need before anything is built reads as an error) | |
+| 8 | Top bar, the line under each goal (`8-hud.png`, real phone, new game and later): A as now, red "not being made" at the start / B grey "not started", red only when it was coming in and stopped / C no line (pick B) | sheet sent 2026-11-09, waiting on Byron's letter |
 | 9 | Dock and hotbar | |
 | 10 | Drawers, sheets, toasts, motion | |
 
