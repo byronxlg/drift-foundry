@@ -40,8 +40,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-o
 .nb { grid-column: 1 / -1; position: relative; height: 6px; background: var(--raised); border-radius: 3px; overflow: hidden; }
 .nb i, .nb b { position: absolute; left: 0; top: 0; bottom: 0; }
 .nb b { background: var(--accentSoft); } .nb i { background: var(--accent); z-index: 1; }
-.ns { grid-column: 1 / -1; font-size: var(--t5); color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.needs li.met .nv { color: var(--ok); } .needs li.none .ns { color: var(--bad); }
+.needs li.met .nv { color: var(--ok); }
 .act { display: flex; gap: 8px; }
 .advice { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; text-align: left; padding: 8px 12px 8px 8px; border-radius: var(--rc); background: var(--raised); min-height: 48px; }
 .advice b { flex: none; font: 700 var(--t4)/1 var(--fig); color: var(--accentInk); background: var(--accent); padding: 6px 8px; border-radius: calc(var(--rc) * .6); }

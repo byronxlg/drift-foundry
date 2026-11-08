@@ -284,15 +284,13 @@ function render() {
   $('#power').classList.toggle('short', st.powerFactor < 0.98);
   const P = G.PHASES[Math.min(s.phase, 4)];
   $('.seg-name').textContent = done ? 'Ring complete' : P.name;
-  const rem = G.remaining(s); const gross = G.grossRates(s);
+  const rem = G.remaining(s);
   let tot = 0; let have = 0; let html = '';
   for (const [k, need] of Object.entries(done ? {} : P.need)) {
     const got = need - rem[k]; tot += need; have += got;
     const inStock = Math.min(Math.floor(s.stock[k]), rem[k]);
-    const r = gross[k];
-    const sub = rem[k] <= 0 ? 'delivered' : inStock >= rem[k] ? 'ready to deliver' : r > 0.001 ? `+${G.fmt(r)}/s, ${G.fmt(s.stock[k])} held` : s.made[k] > 0 ? 'none to the Hub' : 'not being made';
-    html += `<li class="${rem[k] <= 0 ? 'met' : r <= 0.001 && inStock < rem[k] ? 'none' : ''}">${swatch(k)}<span class="nn">${G.ITEMS[k].name}</span><span class="nv">${G.fmt(got)}<small>/${G.fmt(need)}</small></span>
-      <span class="nb"><i style="width:${(got / need) * 100}%"></i><b style="width:${(Math.min(need, got + inStock) / need) * 100}%"></b></span><span class="ns">${sub}</span></li>`;
+    html += `<li class="${rem[k] <= 0 ? 'met' : ''}">${swatch(k)}<span class="nn">${G.ITEMS[k].name}</span><span class="nv">${G.fmt(got)}<small>/${G.fmt(need)}</small></span>
+      <span class="nb"><i style="width:${(got / need) * 100}%"></i><b style="width:${(Math.min(need, got + inStock) / need) * 100}%"></b></span></li>`;
   }
   $('.needs').innerHTML = html; $('.needs').dataset.n = Object.keys(done ? {} : P.need).length;
   const frac = done ? 1 : tot ? have / tot : 0;

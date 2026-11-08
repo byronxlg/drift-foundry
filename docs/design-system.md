@@ -185,7 +185,7 @@ throughout, no tracked capitals, no monospace.
 
 ## Components
 
-HUD (goal ring, segment name, power, needs row, Next, Deliver); dock (tools, stock strip, hotbar);
+HUD (goal ring, segment name, power, needs row, Next, Deliver; each need is name, count and bar, no status line under it, piece 8 C); dock (tools, stock strip, hotbar);
 hotbar card (silhouette icon, name, owned count, cost); drawer (inspect, stock, research, menu);
 sheet; toast; hint. Each component has rest, pressed, focus (2 px focus ring in ink), disabled
 and, where it applies, selected and short-of-cost states.
