@@ -26,7 +26,7 @@ Taken from the lessons of the design system run (bot msg 1559), to be tested her
 | 3 | Building: pick a machine, place it, place again, cancel | proposed |
 | 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed |
 | 5 | Trouble: from seeing a problem to fixing it (tap, Next, the fix) | proposed |
-| 6 | Goals: knowing what to make next, delivering, and the map growing | proposed |
+| 6 | Goals: knowing what to make next, delivering, the map growing, and where the player sees the road ahead (the ring list, 1-road.png) | proposed |
 | 7 | Research: what it unlocks and when you see it | proposed |
 | 8 | Coming back: the away summary and picking up where you were | proposed |
 | 9 | Menu: save, new game, settings | proposed |
@@ -69,3 +69,27 @@ Byron, 2026-11-09 (#19364900), on the steps: "I want this to be visual". So the 
   pictures; ends at "The rock leaves". (pick)
 - C: tap the ring, the ring drawn big and filling, the parts each segment needs listed below with
   item shapes; no machines.
+
+Byron, 2026-11-09 (#19364901), on the screen picture (1-road.png): "This is a ui thing. We're
+talking about how we design the progression. Something a user wouldn't see but they would
+experience". So decision 1 is the pacing itself. Where the road is shown moves to decision 6.
+
+### The progression, drawn
+
+![how the game unfolds](1-progression.png)
+
+Tall marks are moments something new arrives: a machine, a resource or a research.
+
+- A, as now (bot, 15 s checks): parts done at 4 m, 20 m, 1 h 3 m, 1 h 46 m, 6 h 7 m. Every new
+  thing comes with a part, so Engine is 4 h 21 m of building more of the same.
+- B, steady climb: parts done at about 10 m, 40 m, 1 h 40 m, 3 h 20 m, 6 h. Each part a little
+  longer than the last, and Nerve and Engine each open one research part way through, so
+  something new arrives about every hour. Longest stretch 1 h 20 m.
+- C, play then leave: the first three parts in one 40 min sitting, then Nerve and Engine sized
+  to run while the player is away, with a "come back in about 2 h" line. Same six hours.
+
+Pick B: closest to the six-hour game with some idle time that was asked for, and it is numbers
+only (what each part asks for, when two research open); C needs a new come-back feature. After
+the pick, the parts are retuned and the bot checks the times.
+
+Drawn with `docs/ux/1-progression.py`.
