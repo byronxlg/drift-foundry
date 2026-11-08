@@ -27,7 +27,7 @@ Taken from the lessons of the design system run (bot msg 1559), to be tested her
 | 3 | Building: pick a machine, place it, place again, cancel | proposed |
 | 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed |
 | 5 | Trouble: from seeing a problem to fixing it (tap, Next, the fix) | proposed |
-| 6 | Goals: knowing what to make next, delivering, the map growing, and where the player sees the road ahead (the ring list, 1-road.png) | proposed |
+| 6 | Goals: knowing what to make next, delivering, the map growing, and where the player sees the road ahead (the ring list, 1-road.png) | one goal proposed (#19364912), see "The one goal" |
 | 7 | Research: what it unlocks and when you see it | proposed |
 | 8 | Coming back: the away summary and picking up where you were | proposed |
 | 9 | Menu: save, new game, settings | proposed |
@@ -307,3 +307,25 @@ real shot (`?demo=2`) before the Dock is asked about again.
 Made by `2b-explain.html` and `2b-explain-shot.cjs`. The question stays the one from bot msg 1582,
 in plain words: lines into a Dock decide what goes to the ring (pick), or the ring takes from the
 Hub by itself, or keep the button.
+
+## The one goal
+
+Byron, 2026-11-09 (#19364912), on bot msg 1588: "I think we have to talk about the overall goal of
+the game. What is the goal? There should only be one goal throughout the game".
+
+The goal on paper (`docs/design.md`): finish the ring of five parts so the rock flies home. In play
+the player is chasing four different things: piles for the ring (Anchor to Nerve), a rate for the
+Engine (decision 1, a switch in the last four hours), hub stock for building and Research, and the
+map growing. Deliver made it worse by asking the player to choose between the ring and building.
+
+Proposed, one goal from the first minute to the last: get the rock home by feeding the ring.
+Measured the same way all game, as parts a minute into the ring (the Dock).
+
+- Each ring part asks for a rate of its part, held for a while: Anchor a few ingots a minute,
+  Engine motors a minute. No switch from piles to a rate at the Engine.
+- Everything else is a means: machines, lines, Research and the map growing exist only to raise
+  that rate. The ring band shows one number against one target.
+- Hub stock stays as what you build with, never a second score.
+
+Options sent: yes (rate all game) / piles all game (simpler, but efficiency only matters as speed) /
+something else in his words.
