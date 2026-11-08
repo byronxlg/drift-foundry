@@ -21,13 +21,41 @@ Taken from the lessons of the design system run (bot msg 1559), to be tested her
 
 | # | Decision | Status |
 | --- | --- | --- |
-| 1 | First minutes: how a new player learns what to do (the advice line as now, a few guided steps, or nothing) | proposed |
-| 2 | Building: pick a machine, place it, place again, cancel | proposed |
-| 3 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed |
-| 4 | Trouble: from seeing a problem to fixing it (tap, Next, the fix) | proposed |
-| 5 | Goals: knowing what to make next, delivering, and the map growing | proposed |
-| 6 | Research: what it unlocks and when you see it | proposed |
-| 7 | Coming back: the away summary and picking up where you were | proposed |
-| 8 | Menu: save, new game, settings | proposed |
+| 1 | The whole game: the five segments from start to finish, what each needs and opens, and where the player sees that road | steps written, waiting on yes |
+| 2 | First minutes: how a new player learns what to do (the advice line as now, a few guided steps, or nothing) | proposed |
+| 3 | Building: pick a machine, place it, place again, cancel | proposed |
+| 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed |
+| 5 | Trouble: from seeing a problem to fixing it (tap, Next, the fix) | proposed |
+| 6 | Goals: knowing what to make next, delivering, and the map growing | proposed |
+| 7 | Research: what it unlocks and when you see it | proposed |
+| 8 | Coming back: the away summary and picking up where you were | proposed |
+| 9 | Menu: save, new game, settings | proposed |
 
-The order is waiting on Byron's yes or his reorder.
+Byron, 2026-11-09 (#19364899), on the order: "Maybe the first one should show the overall
+progression steps needed to complete the game". Added as decision 1; the rest move down one.
+
+## 1. The whole game
+
+The road today (from `src/game.js`, times from `sim/balance.mjs`):
+
+| Segment | Asks for | Opens | Done by |
+| --- | --- | --- | --- |
+| Anchor | 300 ingots | ore drill, smelter (from the start) | 4 min |
+| Spine | ingots, plates, wire | coal drill, burner, press, wire drawer | 20 min |
+| Lattice | frames, concrete | quarry, kiln, assembler, turbine | 1 h 3 min |
+| Nerve | circuits, frames, wire | quartz drill, refinery, fabricator | 1 h 46 min |
+| Engine | motors, circuits, concrete | solar field, motor works | 6 h 7 min |
+
+Then the ring is whole and the rock leaves.
+
+What the player sees now: the five-arc ring in the top bar, and only the current segment's parts.
+The four ahead have no names until reached.
+
+Proposed steps, for Byron's yes:
+
+1. Tap the ring in the top bar: a list of all five segments opens.
+2. Done segments are ticked. The current one shows its parts and progress.
+3. Segments ahead show their name and the parts they ask for. The machines they open stay hidden
+   until reached, so the build bar never shows locked clutter.
+4. Close goes back to the map. A new game opens this list once, so the first thing a player sees
+   is where the game ends.
