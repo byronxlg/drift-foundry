@@ -1,0 +1,19 @@
+# Design system, piece by piece
+
+Byron picked direction B (Survey chart) and asked to go through the system piece by piece
+(#19364880, 2026-11-08). Each piece is sent as one picture with 2-3 options and a pick; his answer
+is applied to `src/theme.js` and `docs/design-system.md`, then the next piece goes out.
+
+| # | Piece | Status |
+| --- | --- | --- |
+| 1 | Items: colour plus shape (`1-items.png`) | sent 2026-11-08, A now / B one mid tone / C two tones (pick C) |
+| 2 | Machines: family silhouettes, output token | |
+| 3 | Map ground: nodes, belts, power reach, placing | |
+| 4 | Status marks (known: fresh game marks the next ore node "Fix" while Next says "tap an ore node") | |
+| 5 | Type | |
+| 6 | HUD (known: red "not being made" under the first need before anything is built reads as an error) | |
+| 7 | Dock and hotbar | |
+| 8 | Drawers, sheets, toasts, motion | |
+
+`1-items-palette.py` generates the B and C palettes to a target luminance and prints contrast
+against the chart (`terrain`), the white panel and the machine body.
