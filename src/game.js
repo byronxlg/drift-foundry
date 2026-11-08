@@ -149,6 +149,7 @@ export function checkPhase(s) {
 // Advance the factory by dt seconds. Power first, then extractors and makers in order;
 // each maker runs as far as its inputs allow. Rates and utilisation are recorded for the UI.
 export function tick(s, dt) {
+  if (s._w && s._w.flow) { s._w.flow(s, dt); return; } // supply lines: world.js runs the flow
   const pm = powerMult(s);
   let demand = 0;
   for (const b of BUILD_ORDER) { const B = BUILDINGS[b]; if (B.power && !s.off[b]) demand += B.power * pm * s.built[b]; }
@@ -195,6 +196,7 @@ export function tick(s, dt) {
 
 // Gross production per second per item at current utilisation, ignoring consumption.
 export function grossRates(s) {
+  if (s._w && s._w.flow) { const r = {}; for (const k in ITEMS) r[k] = Math.max(0, s.stats.rate[k] || 0); return r; } // what reaches the Hub
   const out = {};
   for (const k in ITEMS) out[k] = 0;
   for (const b of BUILD_ORDER) {

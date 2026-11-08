@@ -10,7 +10,9 @@ const s = G.newState(0);
 // Default: the bot plays the builder (places on nodes, lays belts and poles). --abstract: counts only.
 const spatial = !process.argv.includes('--abstract');
 const seed = Number((process.argv.find((a) => a.startsWith('--seed=')) || '--seed=7').slice(7));
-if (spatial) { s.world = W.newWorld(seed); W.recompute(s); }
+// --lines: supply lines (piece 4) instead of belts to the Hub
+const lines = process.argv.includes('--lines');
+if (spatial) { s.world = W.newWorld(seed, lines ? 'lines' : ''); W.recompute(s); }
 const build = (b) => (spatial ? W.autoBuild(s, b) : G.build(s, b));
 const producerOf = {};
 for (const b of G.BUILD_ORDER) for (const k of Object.keys(G.BUILDINGS[b].out)) producerOf[k] ??= b;
@@ -69,6 +71,7 @@ while (!s.done && s.playSeconds < 20 * 3600) {
   if (s.playSeconds - last < period) continue;
   last = s.playSeconds;
   if (spatial) W.repair(s);
+  if (lines) W.tendLines(s, Number(process.env.TEND || 1));
   for (const u in G.UPGRADES) G.buyUpgrade(s, u);
   for (const b in s.off) delete s.off[b];
   let t = target();
@@ -96,6 +99,7 @@ for (const m of marks) {
   prev = m.at;
 }
 if (spatial && process.env.DEBUG) console.log(JSON.stringify(s.world.items.filter((it) => it.st !== "on").map((it) => [it.b, it.st, Math.round(W.dist(it.i))])), JSON.stringify(s.placed), JSON.stringify(s.built), JSON.stringify(Object.fromEntries(Object.entries(s.stock).map(([k,v])=>[k,Math.round(v)]))));
+if (lines) console.log(`lines: ${s.world.lines.length}, to the Hub ${s.world.lines.filter((l) => l.b === W.HUBT).length}`);
 if (spatial) console.log(`map: ${s.world.items.length} machines, ${s.world.belts.length} belt tiles, ${s.world.poles.length} poles, ${s.world.items.filter((it) => it.st !== 'on').length} not counting`);
 console.log(s.done ? `finished in ${G.fmtTime(s.done)}, ${builds} builds` : `not finished after ${G.fmtTime(s.playSeconds)}; phase ${s.phase} remaining ${JSON.stringify(G.remaining(s))}`);
 if (process.env.DEBUG) console.log(JSON.stringify({ built: s.built, stock: Object.fromEntries(Object.entries(s.stock).map(([k, v]) => [k, Math.round(v)])), util: s.stats.util, sup: s.stats.supply, dem: s.stats.demand, reserve }, null, 0));

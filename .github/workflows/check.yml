@@ -17,3 +17,5 @@ jobs:
         run: node sim/balance.mjs 15 | tee sim.out && grep -E 'finished in ([4-8]h)' sim.out
       - name: Count-only model still in range
         run: node sim/balance.mjs 15 --abstract | tee abs.out && grep -E 'finished in ([4-8]h)' abs.out
+      - name: Supply lines preview in range (?flow=lines)
+        run: node sim/balance.mjs 15 --lines | tee lines.out && grep -E 'finished in ([4-8]h)' lines.out
