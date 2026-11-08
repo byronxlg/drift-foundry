@@ -181,3 +181,29 @@ Drawn with `docs/ux/1-tiers.py`. Each step adds to the one before.
 Pick Better: the target and the view of what holds it back are what make the pieces worth using.
 Best sits on top of Better without changing it, so it can follow. Numbers in the picture are
 examples until the bot sets them.
+
+Byron, 2026-11-09 (#19364905), on 1-tiers.png: "I'm talking about what a user wouldn't build. So
+good would be what they build early game, better mid game and best late game". So good, better,
+best are not three scopes for us to build; they are what a player builds with kit C as the game
+goes on, and the kit and line limit are there so that climb exists.
+
+### What a player builds
+
+![What a player builds: good, better, best](1-builds.png)
+
+Drawn with `docs/ux/1-builds.py`, one job (plates to the hub) at real rates from `src/game.js`,
+a line carrying 1 item a second.
+
+- Good, early game (Anchor, Spine): lines only, drill to smelter to press in a row. The smelter
+  makes 0.5 ingot a second and the press wants 1, so the press sits idle half the time. 0.25
+  plates a second from 3 machines.
+- Better, mid game (Lattice, Nerve): a merger lets two smelters fill one press exactly. 0.5 plates
+  a second, every machine busy. It stops where one press and one line are full.
+- Best, late game (Engine): blocks sized to one full line (2 smelters to 1 press), copied side by
+  side, merged, and an overflow that feeds the assembler first and sends only the spare to the
+  hub, so a full assembler never stops the presses. 1 plate a second from 10 machines and 4
+  pieces.
+
+The splitter's part (sharing one line of ore across smelters) is left out to keep the picture to
+one idea per step. What the game itself provides for this stays as 1-tiers.png's Better: lines
+show load and backups, machines show idle, Engine asks for a rate held.
