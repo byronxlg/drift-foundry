@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset="utf-8">
-<!-- Piece 6, status marks, 2026-11-09. How a machine says it needs you. Machines and the marks in A are
+<!-- Piece 6, status marks, 2026-11-09, redrawn after Byron #19364890: trouble shows where it is (machine or line). Machines and the marks in A are
 drawn by the game's own drawMachine and drawBuilding rules (sliced from src/build.js at load). Render:
 serve the repo root, open docs/pieces/6-status.html at 1080 px wide, screenshot the page to 6-status.png. -->
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Archivo+Narrow:wght@600;700&display=swap" rel="stylesheet">
@@ -19,9 +19,9 @@ canvas{display:block;border-radius:12px;width:1008px;height:432px}
 </style></head><body>
 <div class="h"><p class="prog">Piece 6 of 10. Done: items, machines, supply lines, ground, power.</p>
 <h1>Problem marks</h1>
-<p>The small mark a machine gets when it needs you. Same machines in each: one running fine, then each kind of trouble. On the right is the ore field the game asks you to tap first.</p></div>
+<p>Redrawn after your note: output piling up is a line problem, not a machine problem. So trouble shows where it is: on the machine only when the machine itself is the problem, on the line when a line is. Same machines in each: one running fine, then each kind of trouble.</p></div>
 <div id="opts"></div>
-<div class="f">My pick: <b>B</b>. One spot to look, top right of every machine; red means stopped, amber means slow. The first tap is called Next, not Fix.</div>
+<div class="f">My pick: <b>B</b>. You look at the thing that needs fixing: a machine mark means fix the machine (power, or turn it back on), a coloured line means fix the lines.</div>
 <script type="module">
 import { THEME as TH, SHAPE } from '../../src/theme.js';
 import * as G from '../../src/game.js';
@@ -35,8 +35,8 @@ const { drawMachine, drawItem } = new Function('TH', 'COL', 'COL_ON', 'PATH', 'G
 const Z = 72, NX = 14, NY = 6, W = NX * Z, H = NY * Z;
 const ctr = (x, y) => [x * Z + Z / 2, y * Z + Z / 2];
 // the row: [machine, x, y, state, words under it]
-const ROW = [['smelter', 1, 0.6, 'ok', 'running'], ['press', 4.3, 0.6, 'starved', 'short of input'], ['drawer', 7.6, 0.6, 'nopower', 'no power'],
-  ['kiln', 1, 3.4, 'noout', 'no line out'], ['smelter', 4.3, 3.4, 'backed', 'output piling up'], ['press', 7.6, 3.4, 'off', 'stood by']];
+const ROW = [['smelter', 1.1, 0.6, 'ok', 'running'], ['press', 4.5, 0.6, 'starved', 'short of input'], ['drawer', 7.9, 0.6, 'nopower', 'no power'],
+  ['kiln', 1.1, 3.4, 'noout', 'no line out'], ['smelter', 4.5, 3.4, 'backed', 'output piling up'], ['press', 7.9, 3.4, 'off', 'stood by']];
 const ORE = [[11, 2], [12, 2], [11, 3], [12, 3], [13, 3], [12, 4]];
 const IN = { smelter: [0, 1], press: [3, 1], drawer: [6, 1], kiln: [9, 1] }; // where each input line comes from (one tile left)
 
@@ -50,7 +50,7 @@ function patch(g, tiles, col) {
 }
 function lumps(g, x, y, k) { drawItem(g, k, x * Z + Z * .14, y * Z + Z * .14, Z * .42); drawItem(g, k, x * Z + Z * .5, y * Z + Z * .48, Z * .34); }
 function line(g, a, b, k, opt) { // a short supply line with one item riding it
-  const p = ctr(...a), q = ctr(...b); g.strokeStyle = opt.col || TH.supply; g.lineWidth = Z * .09; g.lineCap = 'round';
+  const p = ctr(...a), q = ctr(...b); g.strokeStyle = opt.col || TH.supply; g.lineWidth = Z * (opt.col ? .13 : .09); g.lineCap = 'round';
   if (opt.dash) g.setLineDash([Z * .14, Z * .14]); g.beginPath(); g.moveTo(...p); g.lineTo(...q); g.stroke(); g.setLineDash([]);
   if (k) drawItem(g, k, (p[0] + q[0]) / 2 - Z * .15, (p[1] + q[1]) / 2 - Z * .15, Z * .3);
 }
@@ -70,35 +70,51 @@ function markA(g, st, sx, sy) { // as drawBuilding does today
   else if (st === 'off') { g.fillStyle = TH.surface; g.beginPath(); g.arc(bx, by, r, 0, 7); g.fill(); glyph.pause(g, bx, by, r, TH.ink2); }
   else if (st === 'starved' || st === 'backed') { g.fillStyle = TH.warn; g.strokeStyle = TH.ink; g.lineWidth = 1.2; g.beginPath(); g.moveTo(bx, by - r); g.lineTo(bx + r, by + r * 0.75); g.lineTo(bx - r, by + r * 0.75); g.closePath(); g.fill(); g.stroke(); }
 }
-function markB(g, st, sx, sy) {
-  if (st === 'ok') return;
-  if (st === 'off') { const [bx, by, r] = badge(g, sx, sy, TH.surface, TH.ink2); glyph.pause(g, bx, by, r, TH.ink2); return; }
-  const col = st === 'starved' || st === 'backed' ? TH.warn : TH.bad; const [bx, by, r] = badge(g, sx, sy, col);
-  glyph[{ nopower: 'bolt', starved: 'empty', noout: 'stop', backed: 'full' }[st]](g, bx, by, r);
-}
 function chip(g, x, y, lab) { const px = x * Z, py = y * Z; g.strokeStyle = TH.accent; g.lineWidth = 3; g.beginPath(); g.roundRect(px - 3, py - 3, Z + 6, Z + 6, Z * .26); g.stroke();
   g.font = `700 ${Z * .36}px "Archivo Narrow"`; const tw = g.measureText(lab).width + 12, th = Z * .46;
   g.fillStyle = TH.accent; g.beginPath(); g.roundRect(px + Z / 2 - tw / 2, py - th / 2 - 4, tw, th, 4); g.fill();
   g.fillStyle = TH.accentInk; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(lab, px + Z / 2, py - 3); }
+// B and C: only machine trouble (no power, stood by) marks the machine; line trouble shows on the line
+function markMachine(g, st, sx, sy) {
+  if (st === 'off') { const [bx, by, r] = badge(g, sx, sy, TH.surface, TH.ink2); glyph.pause(g, bx, by, r, TH.ink2); }
+  if (st === 'nopower') { const [bx, by, r] = badge(g, sx, sy, TH.bad); glyph.bolt(g, bx, by, r); }
+}
+function stub(g, x, y, col, dash) { g.strokeStyle = col; g.lineWidth = Z * .13; g.lineCap = 'round'; if (dash) g.setLineDash([Z * .1, Z * .12]);
+  g.beginPath(); g.moveTo(x * Z + Z, y * Z + Z / 2); g.lineTo(x * Z + Z * 1.9, y * Z + Z / 2); g.stroke(); g.setLineDash([]); }
+function pile(g, x, y, k, n, step) { for (let j = n - 1; j >= 0; j--) { const ix = step ? x * Z + Z * 1.08 + j * Z * step : x * Z + Z * (1.02 + (j % 2) * .2), iy = step ? y * Z + Z * .32 : y * Z + Z * (.05 - (j > 1 ? .2 : 0)) - (j === 1 ? 0 : 0);
+  if (!step) { g.fillStyle = TH.terrain; g.beginPath(); g.arc(ix + Z * .18, iy + Z * .18, Z * .22, 0, 7); g.fill(); } drawItem(g, k, ix, iy + (step ? Z * .06 : 0), Z * (step ? .26 : .36)); } }
+function edge(g, x, y, side, col) { // C: a bar on the side of the machine the trouble is on
+  const px = side === 'in' ? x * Z - Z * .04 : x * Z + Z * .96; g.fillStyle = col; g.strokeStyle = '#ffffff'; g.lineWidth = 2;
+  g.beginPath(); g.roundRect(px - Z * .05, y * Z + Z * .18, Z * .18, Z * .64, Z * .06); g.fill(); g.stroke(); }
 
 function draw(g, opt) {
   g.fillStyle = TH.terrain; g.fillRect(0, 0, W, H);
   patch(g, ORE, TH.items.ore); for (const [x, y] of ORE) lumps(g, x, y, 'ore');
-  for (const [b, x, y, st] of ROW) { const from = [x - 1, y]; const k = Object.keys(G.BUILDINGS[b].in)[0];
-    const cut = opt === 'C' && st === 'starved'; line(g, from, [x, y], cut ? null : k, cut ? { col: TH.warn, dash: true } : {});
-    if (st !== 'noout') { const back = opt === 'C' && st === 'backed'; line(g, [x, y], [x + 1, y + 0], back ? outItem(b) : null, back ? { col: TH.warn } : {}); }
-    else if (opt === 'C') { g.strokeStyle = TH.bad; g.lineWidth = Z * .09; g.lineCap = 'round'; g.setLineDash([Z * .1, Z * .12]); g.beginPath(); g.moveTo(x * Z + Z, y * Z + Z / 2); g.lineTo(x * Z + Z * 1.55, y * Z + Z / 2); g.stroke(); g.setLineDash([]); } }
+  for (const [b, x, y, st] of ROW) { const k = Object.keys(G.BUILDINGS[b].in)[0]; const o = outItem(b);
+    if (opt === 'A') { line(g, [x - 1, y], [x, y], k, {}); if (st !== 'noout') line(g, [x, y], [x + 1, y], null, {}); continue; }
+    const short = st === 'starved';
+    line(g, [x - 1.3, y], [x, y], short ? null : k, short ? { col: TH.warn, dash: true } : {});
+    if (st === 'noout') stub(g, x, y, TH.bad, true);
+    else if (st === 'backed') line(g, [x, y], [x + 1.4, y], null, { col: TH.warn });
+    else line(g, [x, y], [x + 1.3, y], st === 'ok' ? o : null, {});
+  }
   for (const [b, x, y, st, words] of ROW) {
     drawMachine(g, b, x * Z, y * Z, Z, { off: st === 'off' || st === 'nopower', running: st === 'ok' || st === 'starved', t: 0.4 });
-    (opt === 'A' ? markA : markB)(g, st, x * Z, y * Z);
+    if (opt === 'A') markA(g, st, x * Z, y * Z); else markMachine(g, st, x * Z, y * Z);
+    if (opt !== 'A') { const o = outItem(b);
+      if (st === 'backed') pile(g, x, y, o, 3, .42); // queued along the line out
+      if (st === 'noout') pile(g, x, y, o, 3, 0);   // heaped at the door, nowhere to go
+      if (opt === 'C' && st === 'starved') edge(g, x, y, 'in', TH.warn);
+      if (opt === 'C' && st === 'backed') edge(g, x, y, 'out', TH.warn);
+      if (opt === 'C' && st === 'noout') edge(g, x, y, 'out', TH.bad); }
     g.fillStyle = TH.ink2; g.font = '600 20px Archivo'; g.textAlign = 'center'; g.textBaseline = 'top'; g.fillText(words, x * Z + Z / 2, y * Z + Z + 8);
   }
   chip(g, 12, 2, opt === 'A' ? 'Fix' : 'Next');
 }
 const OPTS = [
-  ['A', 'As now. Four different marks: a yellow triangle (short of input, or piling up), a red bolt, a red dashed outline round the whole machine, a grey pause. The first ore field says Fix.'],
-  ['B', 'One round mark, always top right. Red when the machine has stopped, amber when it is slow, grey when you stood it by. The picture inside says why. The first tap says Next.', true],
-  ['C', 'B, plus the line that causes it changes: a dashed amber line where input is short, a red stub where an output line is missing, an amber line where output is piling up.'],
+  ['A', 'As now. Every kind of trouble is a mark on the machine, even when the machine is fine and the problem is its lines.'],
+  ['B', 'Trouble shows where it is. A machine only gets a mark for its own trouble: no power (red bolt) or stood by (grey pause). Short of input: the line coming in goes amber and dashed. Output piling up: the line going out goes amber with items queued on it. No line out: items heap at its door and a red dashed stub shows where a line should go. The first tap says Next.', true],
+  ['C', 'B, plus a short bar on the side of the machine the trouble is on (left for input, right for output), so it still shows when you zoom right out and the lines get thin.'],
 ];
 await document.fonts.load('700 17px "Archivo Narrow"'); await document.fonts.load('600 20px Archivo');
 for (const [k, txt, pick] of OPTS) {
