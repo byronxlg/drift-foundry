@@ -508,6 +508,70 @@ function tapTile(i) {
 // ---------- drawing ----------
 function hash(i) { let x = i * 2654435761 >>> 0; x ^= x >>> 13; return (x & 255) / 255; }
 function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+// ---------- the ground: fields as rounded patches with a rim, cached off screen ----------
+// A field is a 4-connected group of node tiles. Each is drawn once per zoom step to its own canvas:
+// overlapping discs (0.72 tile) laid opaque, eroded by the rim width; the inside at nodeAlpha, the
+// rim at rimAlpha, both in the deep item tone. Per frame it is one drawImage per visible field.
+let FIELDS = null; let fieldSeed = null;
+function fieldsOf(grid, seed) {
+  if (fieldSeed === seed) return FIELDS;
+  const seen = new Uint8Array(N * N); FIELDS = []; fieldSeed = seed;
+  for (let i = 0; i < N * N; i++) {
+    if (!grid[i] || seen[i]) continue;
+    const tiles = []; const q = [i]; seen[i] = 1;
+    while (q.length) { const t = q.pop(); tiles.push(t); for (const u of W.neighbours(t)) if (!seen[u] && grid[u] === grid[i]) { seen[u] = 1; q.push(u); } }
+    const xs = tiles.map((t) => t % N); const ys = tiles.map((t) => (t / N) | 0);
+    FIELDS.push({ item: W.ITEM_OF[grid[i]], tiles, x0: Math.min(...xs) - 1, y0: Math.min(...ys) - 1, x1: Math.max(...xs) + 2, y1: Math.max(...ys) + 2, img: null, sc: 0 });
+  }
+  return FIELDS;
+}
+function fieldImage(f, sc) {
+  if (f.img && f.sc === sc) return f.img;
+  const w = (f.x1 - f.x0) * sc; const h = (f.y1 - f.y0) * sc; const mk = () => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+  const A = f.img && f.img.width === w && f.img.height === h ? f.img : mk(); const a = A.getContext('2d'); a.clearRect(0, 0, w, h);
+  const discs = (g) => { g.beginPath(); for (const t of f.tiles) { const px = ((t % N) - f.x0 + 0.5) * sc; const py = (((t / N) | 0) - f.y0 + 0.5) * sc; g.moveTo(px + sc * 0.72, py); g.arc(px, py, sc * 0.72, 0, Math.PI * 2); } g.fill(); };
+  // eroded copy: the shape shifted by the rim width in 8 directions, intersected
+  const E = mk(); const e = E.getContext('2d'); e.fillStyle = '#000'; discs(e);
+  const S = mk(); const sg = S.getContext('2d'); sg.drawImage(E, 0, 0);
+  const rw = Math.max(1.25 * dpr, sc * TH.rimW);
+  e.globalCompositeOperation = 'destination-in';
+  for (let k = 0; k < 8; k++) { const t = (k / 8) * Math.PI * 2; e.drawImage(S, Math.cos(t) * rw, Math.sin(t) * rw); }
+  // rim = shape minus eroded; laid in the item tone at two strengths
+  sg.globalCompositeOperation = 'destination-out'; sg.drawImage(E, 0, 0);
+  for (const g of [e, sg]) { g.globalCompositeOperation = 'source-in'; g.fillStyle = COL[f.item]; g.fillRect(0, 0, w, h); }
+  a.globalAlpha = TH.nodeAlpha; a.drawImage(E, 0, 0); a.globalAlpha = TH.rimAlpha; a.drawImage(S, 0, 0); a.globalAlpha = 1;
+  f.img = A; f.sc = sc; return A;
+}
+// fields and their lumps: full inside the surveyed line, dimmed in the next ring, none past it
+function ground(d, z, cx, cy, R, R2, x0, x1, y0, y1) {
+  const sc = Math.min(128, Math.max(16, Math.round(2 ** (Math.round(Math.log2(z * dpr) * 2) / 2))));
+  const vis = fieldsOf(d.grid, s.world.seed).filter((f) => f.x1 >= x0 && f.x0 <= x1 + 1 && f.y1 >= y0 && f.y0 <= y1 + 1 && f.tiles.some((t) => W.dist(t) <= R2));
+  // at most three fields redrawn per frame on a zoom step; the rest show their last image scaled
+  let budget = 3; for (const f of vis) if (!f.img || (f.sc !== sc && budget-- > 0)) fieldImage(f, sc);
+  for (const f of vis) { f.near = f.tiles.some((t) => W.dist(t) - 1 <= R); f.far = f.tiles.some((t) => W.dist(t) + 1 > R); }
+  for (const pass of [0, 1]) {
+    if (pass === 1 && R2 <= R) break;
+    ctx.save(); ctx.beginPath();
+    if (pass === 0) ctx.arc(cx, cy, R * z, 0, Math.PI * 2); else { ctx.arc(cx, cy, R2 * z, 0, Math.PI * 2); ctx.arc(cx, cy, R * z, 0, Math.PI * 2, true); }
+    ctx.clip(); if (pass) ctx.globalAlpha = TH.nextDim;
+    for (const f of vis) { if (pass === 0 ? f.near === false : f.far === false) continue; const [fx, fy] = toScreen(f.x0, f.y0); ctx.drawImage(f.img, fx, fy, (f.x1 - f.x0) * z, (f.y1 - f.y0) * z); }
+    ctx.restore();
+  }
+  for (const f of vis) for (const i of f.tiles) {
+    const dd = W.dist(i); if (dd > R2) continue; const x = i % N; const y = (i / N) | 0; if (x < x0 || x > x1 || y < y0 || y > y1) continue;
+    const [sx, sy] = toScreen(x, y); const h = hash(i + 7); const a = dd <= R ? 1 : TH.nextNode;
+    drawItem(ctx, f.item, sx + z * (0.1 + h * 0.15), sy + z * 0.14, z * 0.42, a); drawItem(ctx, f.item, sx + z * 0.5, sy + z * (0.45 + h * 0.1), z * 0.34, a);
+  }
+}
+// the next ring's hatching: 14 px diagonal lines, 2 px wide, as a repeating pattern at device scale
+let hatch = null;
+function hatchPattern() {
+  if (hatch && hatch.dpr === dpr) return hatch.p;
+  const n = Math.round(14 * dpr); const c = document.createElement('canvas'); c.width = c.height = n; const g = c.getContext('2d');
+  g.strokeStyle = TH.hatch; g.lineWidth = 2 * dpr; g.beginPath();
+  for (const o of [-n, 0, n]) { g.moveTo(o, n); g.lineTo(o + n, 0); }
+  g.stroke(); hatch = { dpr, p: ctx.createPattern(c, 'repeat') }; return hatch.p;
+}
 function draw(now) {
   const d = W.derived(s); const z = cam.z; const R = d.R;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -518,33 +582,47 @@ function draw(now) {
   const nextR = W.REVEAL[Math.min(s.phase + 1, W.REVEAL.length - 1)];
   const placing = G.BUILDINGS[tool] ? tool : tool === 'pole' ? 'pole' : '';
   const showCov = placing === 'pole' || (placing && G.BUILDINGS[placing].power) || (drawer === 'inspect' && sel >= 0 && (d.occ[sel] === -4 || (d.occ[sel] >= 0 && (G.BUILDINGS[s.world.items[d.occ[sel]].b].gen || s.world.items[d.occ[sel]].st === 'nopower'))));
-  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
-    const i = y * N + x; const dist = W.dist(i); const [sx, sy] = toScreen(x, y);
-    const node = d.grid[i];
-    if (dist > R) {
-      if (dist <= nextR) { ctx.fillStyle = TH.next; ctx.fillRect(sx, sy, z + 0.5, z + 0.5);
-        if (node) drawItem(ctx, W.ITEM_OF[node], sx + z * 0.3, sy + z * 0.3, z * 0.4, TH.nextNode); }
-      continue;
-    }
-    ctx.fillStyle = hash(i) > 0.7 ? TH.terrain2 : TH.terrain; ctx.fillRect(sx, sy, z + 0.5, z + 0.5);
-    if (showCov && d.cov[i]) { ctx.fillStyle = TH.powerSoft; ctx.fillRect(sx, sy, z + 0.5, z + 0.5); }
-    if (node) { // node: a patch in the item colour, two chunks of the item's shape
-      const it = W.ITEM_OF[node]; ctx.fillStyle = COL[it]; ctx.globalAlpha = TH.nodeAlpha; ctx.fillRect(sx, sy, z + 0.5, z + 0.5); ctx.globalAlpha = 1;
-      const h = hash(i + 7); drawItem(ctx, it, sx + z * (0.1 + h * 0.15), sy + z * 0.14, z * 0.42); drawItem(ctx, it, sx + z * 0.5, sy + z * (0.45 + h * 0.1), z * 0.34);
-    }
-    if (placing && d.occ[i] === -1 && !W.whyNot(s, placing, i)) {
-      const good = placing === 'pole' || !G.BUILDINGS[placing].power || d.cov[i];
-      // lit = ready to run there; elsewhere valid only gets a faint dot (it needs a pole too)
-      if (good) { ctx.fillStyle = TH.accentSoft; ctx.beginPath(); ctx.roundRect(sx + z * 0.08, sy + z * 0.08, z * 0.84, z * 0.84, z * 0.12); ctx.fill(); }
-      ctx.fillStyle = TH.accent; ctx.globalAlpha = good ? 1 : 0.35; ctx.beginPath(); ctx.arc(sx + z / 2, sy + z / 2, Math.max(1.5, z * (good ? 0.07 : 0.045)), 0, Math.PI * 2); ctx.fill();
-      ctx.globalAlpha = 1;
-    }
-  }
-  // survey edges
+  // Piece 3 (ground, #19364888): the surveyed rock is a disc with a smooth ink2 edge, the ring that
+  // opens next is shaded and hatched inside a dashed line, fields are one rounded patch with a rim
+  // (cached off screen, ground()). A tile is in when its centre is inside the line (W.revealed).
   const [cx, cy] = toScreen(W.C + 0.5, W.C + 0.5);
-  if (s.phase < G.PHASES.length - 1) {
-    ctx.fillStyle = TH.ink2; ctx.font = `600 ${Math.max(12, z * 0.42)}px ${BAND}`; ctx.textAlign = 'center';
-    ctx.fillText(`Surveyed when ${G.PHASES[s.phase].name} is in`, cx, cy - (nextR + 0.9) * z);
+  const more = nextR > R;
+  if (more) { // the ring as one even-odd path, filled with the tone then the hatch pattern (anchored to the Hub)
+    ctx.beginPath(); ctx.arc(cx, cy, nextR * z, 0, Math.PI * 2); ctx.moveTo(cx + R * z, cy); ctx.arc(cx, cy, R * z, 0, Math.PI * 2);
+    ctx.fillStyle = TH.next; ctx.fill('evenodd');
+    const hp = hatchPattern(); hp.setTransform(new DOMMatrix([1 / dpr, 0, 0, 1 / dpr, cx, cy])); ctx.fillStyle = hp; ctx.fill('evenodd');
+  }
+  ctx.fillStyle = TH.terrain; ctx.beginPath(); ctx.arc(cx, cy, R * z, 0, Math.PI * 2); ctx.fill();
+  if (showCov) { // power reach: one path of tiles, so overlaps do not double the tint, clipped to the line
+    ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R * z, 0, Math.PI * 2); ctx.clip(); ctx.beginPath();
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const i = y * N + x; if (W.dist(i) <= R && d.cov[i]) { const [sx, sy] = toScreen(x, y); ctx.rect(sx, sy, z + 0.5, z + 0.5); } }
+    ctx.fillStyle = TH.powerSoft; ctx.fill(); ctx.restore();
+  }
+  ground(d, z, cx, cy, R, more ? nextR : R, x0, x1, y0, y1);
+  if (placing) for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const i = y * N + x; if (W.dist(i) > R || d.occ[i] !== -1 || W.whyNot(s, placing, i)) continue; const [sx, sy] = toScreen(x, y);
+    const good = placing === 'pole' || !G.BUILDINGS[placing].power || d.cov[i];
+    // lit = ready to run there; elsewhere valid only gets a faint dot (it needs a pole too)
+    if (good) { ctx.fillStyle = TH.accentSoft; ctx.beginPath(); ctx.roundRect(sx + z * 0.08, sy + z * 0.08, z * 0.84, z * 0.84, z * 0.12); ctx.fill(); }
+    ctx.fillStyle = TH.accent; ctx.globalAlpha = good ? 1 : 0.35; ctx.beginPath(); ctx.arc(sx + z / 2, sy + z / 2, Math.max(1.5, z * (good ? 0.07 : 0.045)), 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  // survey edges: the line you build inside, and the dashed outer edge of the next ring with its label
+  ctx.strokeStyle = TH.ink2; ctx.lineWidth = TH.edgeW; ctx.beginPath(); ctx.arc(cx, cy, R * z, 0, Math.PI * 2); ctx.stroke();
+  if (more) {
+    ctx.strokeStyle = TH.edgeNext; ctx.lineWidth = 2; ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.arc(cx, cy, nextR * z, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    if (s.phase < G.PHASES.length) {
+      const fs = Math.max(12, Math.min(18, z * 0.42)); ctx.font = `600 ${fs}px ${BAND}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const txt = `Opens when ${G.PHASES[s.phase].name} is in`; const tw = ctx.measureText(txt).width + fs * 0.9; const th = fs * 1.56; const mid = ((R + nextR) / 2) * z;
+      // in the shaded ring, at the first of twelve spots (top first) where the whole label is on the map
+      const spot = [-90, -60, -120, -45, -135, -30, -150, 0, 180, 90, 45, 135].map((a) => [cx + Math.cos(a * Math.PI / 180) * mid, cy + Math.sin(a * Math.PI / 180) * mid])
+        .find(([lx, ly]) => lx - tw / 2 >= 8 && lx + tw / 2 <= vw - 8 && ly - th / 2 >= v.top + 8 && ly + th / 2 <= v.bot - 8);
+      if (spot) {
+        const [lx, ly] = spot; ctx.fillStyle = TH.labelBg; rr(lx - tw / 2, ly - th / 2, tw, th, TH.rc * 0.8); ctx.fill();
+        ctx.fillStyle = TH.ink; ctx.fillText(txt, lx, ly + 1);
+      }
+      ctx.textBaseline = 'alphabetic';
+    }
   }
   // power reach is the tint on the tiles alone; no circles (they stack into a web of lines)
   const centre = (i) => toScreen((i % N) + 0.5, ((i / N) | 0) + 0.5);
