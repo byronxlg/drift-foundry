@@ -1,0 +1,74 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Archivo+Narrow:wght@600;700&display=swap" rel="stylesheet"><span style="font:700 15px 'Archivo Narrow';position:absolute;opacity:0">Hub</span>
+<style>
+body{margin:0;background:#b9bfc2;font-family:Archivo,sans-serif;color:#162026;width:1080px}
+.h{padding:28px 32px 18px;background:#fff}
+.h h1{font:700 34px/1.1 "Archivo Narrow";margin:0}
+.h p{font:400 19px/1.35 Archivo;margin:8px 0 0;color:#56616a}
+.opt{background:#fff;margin:14px 0 0;padding:20px 32px 24px}
+.opt h2{font:700 28px/1 "Archivo Narrow";margin:0 0 10px}
+.opt h2 b{color:#2346d8}
+.row{display:flex;gap:24px;align-items:flex-start}
+dl{margin:0;font:400 17px/1.35 Archivo;width:420px}
+dt{font:700 13px/1 Archivo;color:#56616a;text-transform:uppercase;letter-spacing:.04em;margin:12px 0 4px}
+dt:first-child{margin-top:0}
+dd{margin:0}
+canvas{display:block;border-radius:10px}
+</style></head><body>
+<div class="h"><h1>Piece 4 of 10: belts, the mechanic first</h1>
+<p>Piece 3 split in three: 3 ground, 4 belts, 5 power (then status, type, HUD, dock, drawers). Belts go first because they decide the game, and the look of ground and power follows. Same factory in each: two ore drills, a smelter, a press, the Hub.</p></div>
+<div id="opts"></div>
+<script>
+const SHAPE={ore:'M.2 .38L.5 .12L.84 .3L.8 .74L.38 .88L.14 .66Z',ingot:'M.06 .72L.22 .3L.78 .3L.94 .72Z',plate:'M.12 .3L.88 .3L.88 .7L.12 .7Z'};
+const DEEP={ore:'#a64027',ingot:'#4c606e',plate:'#7a5a12'},ON={ore:'#f9b3a2',ingot:'#e3e8eb',plate:'#f3d68a'};
+const T={terrain:'#eef0ef',ink:'#162026',ink2:'#56616a',accent:'#2346d8',bad:'#d1242f',belt:'#8d969c',machine:'#2c353c'};
+const P={};for(const k in SHAPE)P[k]=new Path2D(SHAPE[k]);
+const item=(g,k,x,y,s,c)=>{g.save();g.translate(x,y);g.scale(s,s);g.fillStyle=c;g.fill(P[k]);g.restore();};
+const Z=40,NX=13,NY=7;
+const ctr=(x,y)=>[x*Z+Z/2,y*Z+Z/2];
+function machine(g,x,y,inK,outK,label){const m=Z*.07,w=Z-2*m,sx=x*Z+m,sy=y*Z+m;g.fillStyle=T.machine;g.beginPath();g.roundRect(sx,sy,w,w,7);g.fill();
+ if(inK)item(g,inK,sx+w*.06,sy+w*.36,w*.3,ON[inK]);item(g,outK,sx+w*(inK?.42:.22),sy+w*.22,w*(inK?.5:.56),ON[outK]);
+ g.fillStyle=T.ink2;g.font='600 11px Archivo';g.textAlign='center';g.textBaseline='top';g.fillText(label,x*Z+Z/2,y*Z+Z+2);}
+function hub(g){const hx=10*Z,hy=1*Z;g.fillStyle=T.ink;g.beginPath();g.roundRect(hx+2,hy+2,Z*3-4,Z*3-4,14);g.fill();g.strokeStyle=T.accent;g.lineWidth=3;g.stroke();g.fillStyle='#fff';g.font='700 15px "Archivo Narrow"';g.textAlign='center';g.textBaseline='middle';g.fillText('Hub',hx+Z*1.5,hy+Z*1.5);}
+function belt(g,x,y,dx,dy,cargo,col){const [cx,cy]=ctr(x,y);g.strokeStyle=col||T.belt;g.lineCap='butt';g.lineWidth=Z*.3;g.beginPath();g.moveTo(cx-dx*Z/2,cy-dy*Z/2);g.lineTo(cx+dx*Z/2,cy+dy*Z/2);g.stroke();
+ g.fillStyle='#fff';const m=Z*.09;g.beginPath();g.moveTo(cx+dx*Z*.42-dy*m,cy+dy*Z*.42+dx*m);g.lineTo(cx+dx*Z*.5,cy+dy*Z*.5);g.lineTo(cx+dx*Z*.42+dy*m,cy+dy*Z*.42-dx*m);g.fill();
+ if(cargo)item(g,cargo,cx-Z*.13,cy-Z*.13,Z*.26,'#fff');}
+function note(g,x,y,t,col){g.font='600 12px Archivo';const w=g.measureText(t).width+12;g.fillStyle='#fff';g.strokeStyle=col||T.ink2;g.lineWidth=1.2;g.beginPath();g.roundRect(x,y,w,20,10);g.fill();g.stroke();g.fillStyle=col||T.ink;g.textAlign='left';g.textBaseline='middle';g.fillText(t,x+6,y+10.5);}
+function nodes(g){for(const y of [1,3]){g.fillStyle='rgba(166,64,39,0.16)';g.fillRect(0,y*Z,Z,Z);}g.strokeStyle=DEEP.ore;g.lineWidth=2;g.strokeRect(1,Z+1,Z-2,Z*3-2);}
+function base(g){g.fillStyle=T.terrain;g.fillRect(0,0,NX*Z,NY*Z);nodes(g);}
+function A(g){base(g);
+ belt(g,1,1,0,1,'ore');belt(g,1,3,0,-1,'ore');belt(g,1,2,1,0,'ore');belt(g,2,2,1,0,'ore');belt(g,3,2,1,0,'ore');
+ belt(g,5,2,1,0,'ingot');belt(g,6,2,1,0,'ingot');belt(g,8,2,1,0,'plate');belt(g,9,2,1,0,'plate');
+ machine(g,0,1,null,'ore','Drill');machine(g,0,3,null,'ore','Drill');machine(g,4,2,'ore','ingot','Smelter');machine(g,7,2,'ingot','plate','Press');hub(g);
+ // dashed pull lines from hub back to makers
+ g.strokeStyle=T.accent;g.lineWidth=1.5;g.setLineDash([5,4]);for(const [x] of [[4],[7]]){g.beginPath();g.moveTo(10*Z,3.6*Z);g.quadraticCurveTo((x+.5+10)/2*Z,5.6*Z,(x+.5)*Z,3.3*Z);g.stroke();}g.setLineDash([]);
+ note(g,4.6*Z,5.2*Z,'makers draw from the Hub stock',T.accent);note(g,1.2*Z,0.2*Z,'every belt runs to the Hub');}
+function B(g){base(g);
+ belt(g,1,1,0,1,'ore');belt(g,1,3,0,-1,'ore');belt(g,1,2,1,0,'ore');belt(g,2,2,1,0,'ore');belt(g,3,2,1,0,'ore');
+ belt(g,5,2,1,0,'ingot');
+ // splitter at 6,2
+ const [sx,sy]=ctr(6,2);g.fillStyle=T.ink;g.beginPath();g.roundRect(sx-Z*.32,sy-Z*.32,Z*.64,Z*.64,4);g.fill();g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.moveTo(sx-8,sy);g.lineTo(sx+8,sy);g.moveTo(sx,sy);g.lineTo(sx,sy+8);g.stroke();
+ belt(g,6,3,0,1,'ingot');belt(g,6,4,1,0,'ingot');belt(g,7,4,1,0,'ingot');belt(g,8,4,1,0,'ingot');belt(g,9,4,0,-1,'ingot');
+ belt(g,8,2,1,0,'plate');belt(g,9,2,1,0,'plate');
+ machine(g,0,1,null,'ore','Drill');machine(g,0,3,null,'ore','Drill');machine(g,4,2,'ore','ingot','Smelter');machine(g,7,2,'ingot','plate','Press');hub(g);
+ // backed-up belt
+ belt(g,3,5,1,0,'ore',T.bad);belt(g,4,5,1,0,'ore',T.bad);belt(g,2,5,1,0,'ore',T.bad);
+ note(g,5.2*Z,5.15*Z,'full: this belt ends nowhere, so it backs up',T.bad);note(g,1.2*Z,0.2*Z,'ore rides to the smelter, not the Hub');note(g,6.6*Z,1.05*Z,'splitter');}
+function C(g){base(g);
+ machine(g,0,1,null,'ore','Drill');machine(g,0,3,null,'ore','Drill');machine(g,4,2,'ore','ingot','Smelter');machine(g,7,2,'ingot','plate','Press');hub(g);
+ const link=(pts,k,label,col,lx,ly)=>{g.strokeStyle=col||T.belt;g.lineWidth=Z*.16;g.lineJoin='round';g.lineCap='round';g.beginPath();pts.forEach(([x,y],i)=>{const [cx,cy]=ctr(x,y);i?g.lineTo(cx,cy):g.moveTo(cx,cy);});g.stroke();
+  for(let i=1;i<pts.length;i++){const [ax,ay]=ctr(...pts[i-1]),[bx,by]=ctr(...pts[i]);const n=Math.round(Math.hypot(bx-ax,by-ay)/Z);for(let s=0;s<n;s++){const t=(s+.5)/n;item(g,k,ax+(bx-ax)*t-Z*.11,ay+(by-ay)*t-Z*.11,Z*.22,DEEP[k]);}}
+  if(label)note(g,lx,ly,label,col===T.bad?T.bad:T.ink);};
+ link([[0.5,1],[2.5,1],[2.5,2],[3.5,2]],'ore','');link([[0.5,3],[2.5,3],[2.5,2]],'ore','');
+ link([[4.5,2],[6.5,2]],'ingot','');link([[4.5,2],[5.2,2],[5.2,4.5],[11,4.5],[11,3.5]],'ingot','');link([[7.5,2],[9.5,2]],'plate','');
+ note(g,1.6*Z,0.2*Z,'2 drills: 60 ore/min');note(g,4.9*Z,0.55*Z,'smelter wants 60, has 60');note(g,5.6*Z,4.65*Z,'ingot split itself: half to the press, half to the Hub');}
+const OPTS=[
+ {f:A,t:'A. Tether to the Hub (now)',dl:[['How it plays','A belt only proves a machine is joined. Everything lands in one Hub stock and every maker draws from it, wherever it sits. Layout barely matters past "is it joined".'],['On a phone','Easiest: drag a line to the Hub once per cluster.'],['Cost to build','None, it is live.'],['Risk','The builder is decoration; the puzzle is a spreadsheet, not a factory.']]},
+ {f:B,t:'B. Real belts, tile by tile',dl:[['How it plays','Items really ride. A smelter runs only on ore a belt brings it; its ingots go out its own side. Belts have a direction, splitters and mergers, a speed per tier, and back up when nothing takes the load. The Satisfactory puzzle: routing and ratios.'],['On a phone','Hardest: direction, rotation and splitters by thumb. Builderment shows it can work, but it is the most taps per minute of play.'],['Cost to build','Largest: new flow engine, bot that routes belts, balance retuned. Days of work.']]},
+ {f:C,t:'C. Supply lines',pick:true,dl:[['How it plays','Items really move machine to machine, so ratios and placement matter, but you drag from one machine to another and the line routes itself along the tiles. A machine splits its output evenly over its lines; each line shows its rate, each maker shows wanted vs getting.'],['On a phone','One drag per link, no rotating, no splitter pieces.'],['Cost to build','Large but contained: flow per line instead of one stock, bot lays lines, balance retuned. Ground and power pieces then follow from it.']]},
+];
+document.fonts.ready.then(()=>{const root=document.getElementById('opts');
+for(const o of OPTS){const d=document.createElement('div');d.className='opt';d.innerHTML=`<h2>${o.t}${o.pick?' <b>(my pick)</b>':''}</h2>`;
+ const r=document.createElement('div');r.className='row';const c=document.createElement('canvas');const dpr=2;c.width=NX*Z*dpr;c.height=NY*Z*dpr;c.style.width=NX*Z+'px';c.style.height=NY*Z+'px';const g=c.getContext('2d');g.scale(dpr,dpr);o.f(g);
+ const dl=document.createElement('dl');dl.innerHTML=o.dl.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('');r.append(c,dl);d.append(r);root.append(d);}});
+</script></body></html>
