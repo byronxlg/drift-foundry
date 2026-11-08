@@ -1,21 +1,22 @@
 // Drift Foundry builder (preview, ?ui=build): a full-screen top-down map of the rock.
 import * as G from './game.js';
 import * as W from './world.js';
+import { pick, applyCSS, SHAPE, itemSVG } from './theme.js';
 
 const KEY = 'drift-foundry/build';
 const OLD = 'drift-foundry/save';
 const N = W.N;
 const $ = (sel, el = document) => el.querySelector(sel);
 const params = new URLSearchParams(location.search);
-const COL = {
-  ore: '#b8735a', coal: '#7d838b', stone: '#c2ab84', quartz: '#a8e0dc', ingot: '#d4dde6', plate: '#5fa3e0',
-  wire: '#e6a04a', concrete: '#b0a696', silica: '#7fd0bd', frame: '#a493f0', circuit: '#47c47f', motor: '#f06a55',
-};
-const T = { fog: '#0b0e10', rock: '#242c33', rock2: '#283139', seam: '#171c21', dim: '#121619', accent: '#ff9a2e', power: '#59c8ff', ok: '#6fdc8c', warn: '#ffc23d', bad: '#ff6b5b', ink: '#eef1f3', mute: '#a3afb9', metal: '#343e47', belt: '#3d464f' };
+const TH = { ...pick(params.get('ds')), still: matchMedia('(prefers-reduced-motion: reduce)').matches }; applyCSS(TH);
+const COL = TH.items;
+const T = TH;
+const PATH = Object.fromEntries(Object.entries(SHAPE).map(([k, d]) => [k, new Path2D(d)]));
 const KIND = { drill: 'x', coaldrill: 'x', quarry: 'x', quartzdrill: 'x', smelter: 'f', kiln: 'f', refinery: 'f', burner: 'g', turbine: 'g', solar: 's' };
+const outOf = (b) => G.BUILDINGS[b].gen ? '' : outItem(b);
 const outItem = (b) => Object.keys(G.BUILDINGS[b].out)[0];
 const colOf = (b) => (G.BUILDINGS[b].gen ? T.power : COL[outItem(b)]);
-const BAND = 'Barlow Condensed, Barlow, system-ui, sans-serif';
+const BAND = TH.fig;
 
 // ---------- load and save ----------
 let s; const sheetQueue = [];
@@ -90,7 +91,7 @@ document.body.innerHTML = `
 <section class="drawer" id="drawer" hidden><div class="dr-body"></div></section>
 <footer class="dock">
   <div class="tools">
-    <button data-tool="" class="tool on">Inspect</button><button data-tool="belt" class="tool">Belt</button><button data-tool="pole" class="tool">Pole</button><button data-tool="remove" class="tool">Remove</button>
+    <button data-tool="" class="tool on"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2l10 4.5-4 1.5-1.5 4z"/></svg>Select</button><button data-tool="belt" class="tool"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h9V3l4 5-4 5v-3H2z"/></svg>Belt</button><button data-tool="pole" class="tool"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9 1L3 9h4l-1 6 6-8H8z"/></svg>Pole</button><button data-tool="remove" class="tool"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2l4 4 4-4 2 2-4 4 4 4-2 2-4-4-4 4-2-2 4-4-4-4z"/></svg>Remove</button>
     <span class="gap"></span><button class="tool" id="resBtn">Research</button><button class="tool" id="menuBtn">Menu</button>
   </div>
   <div class="strip" id="strip"></div>
@@ -128,7 +129,7 @@ function setTool(t) {
 }
 function renderHint() {
   const h = $('#hint');
-  const txt = G.BUILDINGS[tool] ? (W.EXTRACTS[tool] ? `Tap a lit ${G.ITEMS[W.EXTRACTS[tool]].name.toLowerCase()} node to place it.` : `Tap a lit tile to place a ${G.BUILDINGS[tool].name.toLowerCase()}. Brighter tiles are on the network and powered.`)
+  const txt = G.BUILDINGS[tool] ? (W.EXTRACTS[tool] ? `Tap a lit ${G.ITEMS[W.EXTRACTS[tool]].name.toLowerCase()} node to place it.` : `Tap a lit tile to place ${/^[aeiou]/i.test(G.BUILDINGS[tool].name) ? 'an' : 'a'} ${G.BUILDINGS[tool].name.toLowerCase()}. Lit tiles are on the network and powered; dotted ones need a belt or a pole too.`)
     : tool === 'belt' ? 'Drag from the Hub or a machine to lay belt. Two fingers to move the map.'
       : tool === 'pole' ? 'Tap inside the blue reach to extend power. Poles are free.'
         : tool === 'remove' ? 'Tap a machine, belt or pole to remove it. Machines refund half.' : '';
@@ -136,7 +137,7 @@ function renderHint() {
   if (txt) $('.x', h).onclick = () => setTool('');
 }
 function toast(msg, bad) { const t = $('#toast'); t.textContent = msg; t.className = 'toast' + (bad ? ' bad' : ''); t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 2200); }
-const swatch = (k) => `<i class="sw" style="background:${COL[k]}"></i>`;
+const swatch = (k, sz = 14) => itemSVG(k, COL[k], sz, TH.dark ? null : TH.ink);
 const costHTML = (cost) => Object.entries(cost).map(([k, v]) => `<span class="c${s.stock[k] >= v ? '' : ' short'}">${swatch(k)}${G.fmt(v)}</span>`).join('') || '<span class="c">free</span>';
 
 // ---------- status ----------
@@ -214,14 +215,14 @@ function glide(i) {
 }
 
 // ---------- HUD ----------
-let shape = '';
+let shape = ''; let nextMark = null;
 function rebuildCards() {
   const el = $('#cards'); el.innerHTML = '';
   for (const b of G.BUILD_ORDER) {
     if (!G.isBuildingUnlocked(s, b)) continue;
     const B = G.BUILDINGS[b];
     const c = document.createElement('button'); c.className = 'card'; c.dataset.b = b;
-    c.innerHTML = `<span class="ic" style="--c:${colOf(b)}" data-k="${KIND[b] || 'm'}"></span><span class="nm">${B.name}</span><span class="n"></span><span class="cost"></span>`;
+    c.innerHTML = `<img class="ic" src="${iconURL(b)}" alt=""><span class="n"></span><span class="nm">${B.name}</span><span class="cost"></span>`;
     c.onclick = () => setTool(tool === b ? '' : b);
     el.append(c);
   }
@@ -263,12 +264,13 @@ function render() {
   for (let i = 0; i < 5; i++) { const f = i < s.phase ? 1 : i === s.phase ? frac : 0; const a = $(`.a${i}`); a.style.strokeDasharray = `${f * 100} 100`; }
   const deliverable = Object.entries(rem).some(([k, v]) => v > 0 && s.stock[k] >= 1);
   $('#deliver').disabled = !deliverable; $('#deliver').hidden = done;
+  $('#deliver').classList.toggle('ready', deliverable); document.body.classList.toggle('can-deliver', deliverable);
   const adv = advice(); const ab = $('#advice');
+  nextMark = adv && adv.kind === 'build' && !tool ? { i: goodTile(adv.b), b: adv.b } : adv && (adv.kind === 'belt' || adv.kind === 'pole') ? { i: adv.at } : adv && adv.kind === 'dig' ? { i: nearestNode('ore') } : null;
   ab.hidden = !adv;
   if (adv) {
     ab.className = `advice k-${adv.kind}`;
-    const short = adv.kind === 'build' ? W.shortOf(s, G.buildingCost(s, adv.b)) : '';
-    $('.adv-text', ab).textContent = adv.kind === 'build' ? `${G.BUILDINGS[adv.b].name}. ${adv.why}${short ? ' ' + short : ''}` : adv.why;
+    $('.adv-text', ab).textContent = adv.kind === 'build' ? `${G.BUILDINGS[adv.b].name}. ${adv.why}` : adv.why;
     $('.adv-cost', ab).innerHTML = adv.kind === 'build' ? costHTML(G.buildingCost(s, adv.b)) : '';
   }
   for (const c of document.querySelectorAll('.card')) {
@@ -278,7 +280,7 @@ function render() {
   }
   $('#strip').innerHTML = Object.keys(G.ITEMS).filter((k) => s.made[k] > 0 || s.stock[k] > 0).map((k) => {
     const r = s.stats.rate[k] || 0;
-    return `<span class="si">${swatch(k)}<b>${G.fmt(s.stock[k])}</b><em class="${r < -0.05 ? 'neg' : r > 0.05 ? 'pos' : ''}">${Math.abs(r) < 0.05 ? '' : (r > 0 ? '+' : '') + G.fmt(r) + '/s'}</em></span>`; }).join('') || '<span class="si">Hub stock shows here</span>';
+    return `<span class="si">${swatch(k)}<span class="sn">${G.ITEMS[k].name}</span><b>${G.fmt(s.stock[k])}</b><em class="${r < -0.05 ? 'neg' : r > 0.05 ? 'pos' : ''}">${Math.abs(r) < 0.05 ? '' : (r > 0 ? '+' : '') + G.fmt(r) + '/s'}</em></span>`; }).join('') || '<span class="si">Hub stock shows here</span>';
   $('.tool[data-tool="pole"]').hidden = !W.isPoleUnlocked(s);
   $('#resBtn').hidden = !Object.keys(G.UPGRADES).some((u) => G.isUpgradeUnlocked(s, u));
   const rs = document.documentElement.style;
@@ -301,7 +303,7 @@ function renderDrawer(force) {
       const ins = Object.entries(B.in).map(([k, v]) => `${swatch(k)}${G.fmt(v * per)} ${G.ITEMS[k].name.toLowerCase()}`).join(' + ');
       const outs = B.gen ? `${B.gen} MW` : Object.entries(B.out).map(([k, v]) => `${swatch(k)}${G.fmt(v * per)} ${G.ITEMS[k].name.toLowerCase()}`).join('');
       sig += it.st + cls + txt;
-      html = `<div class="dh"><span class="ic" style="--c:${colOf(it.b)}" data-k="${KIND[it.b] || 'm'}"></span><div><h2>${B.name}</h2><p class="st ${cls}">${txt}</p></div><button class="x" data-a="close" aria-label="Close">Close</button></div>
+      html = `<div class="dh"><img class="ic" src="${iconURL(it.b)}" alt=""><div><h2>${B.name}</h2><p class="st ${cls}">${txt}</p></div><button class="x" data-a="close" aria-label="Close">Close</button></div>
         <p class="rate">${ins ? ins + ' <span class="to">to</span> ' : ''}${outs}${B.gen ? '' : ' a second'}${B.power ? `, uses ${B.power} MW` : ''}</p>
         ${it.st === 'unlinked' ? '<p class="fix">Draw a belt from this machine to the Hub, or to any machine or belt that reaches it.</p>' : ''}
         ${it.st === 'nopower' ? '<p class="fix">Place a pole inside the blue reach, toward this machine. Poles chain.</p>' : ''}
@@ -398,7 +400,7 @@ cv.addEventListener('pointermove', (e) => {
     const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y);
     const mx = (a.x + b.x) / 2; const my = (a.y + b.y) / 2;
     cam.x -= (mx - gesture.mx) / cam.z; cam.y -= (my - gesture.my) / cam.z; gesture.mx = mx; gesture.my = my;
-    zoomAt(mx, my, Math.max(14, Math.min(72, gesture.z * d / gesture.d)));
+    zoomAt(mx, my, Math.max(16, Math.min(64, gesture.z * d / gesture.d)));
     return;
   }
   const moved = Math.hypot(e.clientX - gesture.x, e.clientY - gesture.y);
@@ -432,7 +434,7 @@ function endPtr(e) {
 cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
 let hover = -1;
 cv.addEventListener('pointerleave', () => { hover = -1; });
-cv.addEventListener('wheel', (e) => { e.preventDefault(); zoomAt(e.clientX, e.clientY, Math.max(14, Math.min(72, cam.z * Math.exp(-e.deltaY * 0.0015)))); }, { passive: false });
+cv.addEventListener('wheel', (e) => { e.preventDefault(); zoomAt(e.clientX, e.clientY, Math.max(16, Math.min(64, cam.z * Math.exp(-e.deltaY * 0.0015)))); }, { passive: false });
 function zoomAt(px, py, z) {
   const v = viewBox(); const wx = (px - vw / 2) / cam.z + cam.x; const wy = (py - v.cy) / cam.z + cam.y;
   cam.z = z; cam.x = wx - (px - vw / 2) / z; cam.y = wy - (py - v.cy) / z; cam.tz = null;
@@ -475,7 +477,7 @@ function feeds() {
   for (const it of s.world.items) {
     if (it.st !== 'on' || G.BUILDINGS[it.b].gen) continue;
     if ((s.stats.util[it.b] ?? 0) < 0.05) continue;
-    const c = COL[outItem(it.b)];
+    const c = outItem(it.b);
     for (let j of W.neighbours(it.i)) {
       for (let k = 0; k < 80 && j >= 0 && d.occ[j] === -3 && !col.has(j); k++) { col.set(j, c); j = d.next[j]; }
     }
@@ -486,7 +488,7 @@ let feedCache = null; let feedAt = 0;
 function draw(now) {
   const d = W.derived(s); const z = cam.z; const R = d.R;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.fillStyle = T.fog; ctx.fillRect(0, 0, vw, vh);
+  ctx.fillStyle = TH.fog; ctx.fillRect(0, 0, vw, vh);
   const v = viewBox();
   const x0 = Math.max(0, Math.floor(cam.x - vw / 2 / z) - 1); const x1 = Math.min(N - 1, Math.ceil(cam.x + vw / 2 / z) + 1);
   const y0 = Math.max(0, Math.floor(cam.y - v.cy / z) - 1); const y1 = Math.min(N - 1, Math.ceil(cam.y + (vh - v.cy) / z) + 1);
@@ -497,38 +499,31 @@ function draw(now) {
     const i = y * N + x; const dist = W.dist(i); const [sx, sy] = toScreen(x, y);
     const node = d.grid[i];
     if (dist > R) {
-      if (dist <= nextR) { ctx.fillStyle = T.dim; ctx.fillRect(sx + 0.5, sy + 0.5, z - 1, z - 1);
-        if (node) { ctx.fillStyle = COL[W.ITEM_OF[node]]; ctx.globalAlpha = 0.18; ctx.fillRect(sx + z * 0.3, sy + z * 0.3, z * 0.4, z * 0.4); ctx.globalAlpha = 1; } }
+      if (dist <= nextR) { ctx.fillStyle = TH.next; ctx.fillRect(sx, sy, z + 0.5, z + 0.5);
+        if (node) drawItem(ctx, W.ITEM_OF[node], sx + z * 0.3, sy + z * 0.3, z * 0.4, TH.nextNode); }
       continue;
     }
-    ctx.fillStyle = hash(i) > 0.7 ? T.rock2 : T.rock; ctx.fillRect(sx + 0.5, sy + 0.5, z - 1, z - 1);
-    if (showCov && d.cov[i]) { ctx.fillStyle = 'rgba(89,200,255,0.10)'; ctx.fillRect(sx + 0.5, sy + 0.5, z - 1, z - 1); }
-    if (node) {
-      const c = COL[W.ITEM_OF[node]];
-      ctx.fillStyle = c; ctx.globalAlpha = 0.22; ctx.fillRect(sx + 1, sy + 1, z - 2, z - 2); ctx.globalAlpha = 0.9;
-      const h = hash(i + 7);
-      for (let k = 0; k < 3; k++) { const px = sx + z * (0.25 + ((h * (k + 3) * 7) % 0.5)); const py = sy + z * (0.28 + k * 0.2); const r = z * (0.07 + 0.04 * ((h * (k + 1) * 13) % 1));
-        ctx.beginPath(); ctx.moveTo(px, py - r); ctx.lineTo(px + r, py); ctx.lineTo(px, py + r); ctx.lineTo(px - r, py); ctx.fill(); }
-      ctx.globalAlpha = 1;
+    ctx.fillStyle = hash(i) > 0.7 ? TH.terrain2 : TH.terrain; ctx.fillRect(sx, sy, z + 0.5, z + 0.5);
+    if (showCov && d.cov[i]) { ctx.fillStyle = TH.powerSoft; ctx.fillRect(sx, sy, z + 0.5, z + 0.5); }
+    if (node) { // node: a patch in the item colour, two chunks of the item's shape
+      const it = W.ITEM_OF[node]; ctx.fillStyle = COL[it]; ctx.globalAlpha = TH.nodeAlpha; ctx.fillRect(sx, sy, z + 0.5, z + 0.5); ctx.globalAlpha = 1;
+      const h = hash(i + 7); drawItem(ctx, it, sx + z * (0.1 + h * 0.15), sy + z * 0.14, z * 0.42); drawItem(ctx, it, sx + z * 0.5, sy + z * (0.45 + h * 0.1), z * 0.34);
     }
     if (placing && d.occ[i] === -1 && !W.whyNot(s, placing, i)) {
       const good = W.neighbours(i).some((j) => d.conn[j]) && (placing === 'pole' || !G.BUILDINGS[placing].power || d.cov[i]);
-      ctx.strokeStyle = T.accent; ctx.globalAlpha = good ? 0.95 : 0.4; ctx.lineWidth = good ? 2 : 1;
-      ctx.strokeRect(sx + 2.5, sy + 2.5, z - 5, z - 5);
-      if (good) { ctx.fillStyle = 'rgba(255,154,46,0.16)'; ctx.fillRect(sx + 2.5, sy + 2.5, z - 5, z - 5); }
+      // lit = ready to run there; elsewhere valid only gets a faint dot (it needs a belt or a pole too)
+      if (good) { ctx.fillStyle = TH.accentSoft; ctx.beginPath(); ctx.roundRect(sx + z * 0.08, sy + z * 0.08, z * 0.84, z * 0.84, z * 0.12); ctx.fill(); }
+      ctx.fillStyle = TH.accent; ctx.globalAlpha = good ? 1 : 0.35; ctx.beginPath(); ctx.arc(sx + z / 2, sy + z / 2, Math.max(1.5, z * (good ? 0.07 : 0.045)), 0, Math.PI * 2); ctx.fill();
       ctx.globalAlpha = 1;
     }
   }
   // survey edges
   const [cx, cy] = toScreen(W.C + 0.5, W.C + 0.5);
-  ctx.setLineDash([6, 6]); ctx.lineWidth = 1.5;
   if (s.phase < G.PHASES.length - 1) {
-    ctx.strokeStyle = 'rgba(255,154,46,0.35)'; ctx.beginPath(); ctx.arc(cx, cy, (nextR + 0.5) * z, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = 'rgba(255,154,46,0.8)'; ctx.font = `600 ${Math.max(12, z * 0.42)}px ${BAND}`; ctx.textAlign = 'center';
+    ctx.fillStyle = TH.ink2; ctx.font = `600 ${Math.max(12, z * 0.42)}px ${BAND}`; ctx.textAlign = 'center';
     ctx.fillText(`Surveyed when ${G.PHASES[s.phase].name} is in`, cx, cy - (nextR + 0.9) * z);
   }
-  ctx.setLineDash([]);
-  if (showCov) { ctx.strokeStyle = 'rgba(89,200,255,0.55)'; ctx.lineWidth = 1; for (const src of d.sources) { const [px, py] = toScreen((src.i % N) + 0.5, ((src.i / N) | 0) + 0.5); ctx.beginPath(); ctx.arc(px, py, src.r * z, 0, Math.PI * 2); ctx.stroke(); } }
+  // power reach is the tint on the tiles alone; no circles (they stack into a web of lines)
   // belts
   if (!feedCache || now - feedAt > 500) { feedCache = feeds(); feedAt = now; }
   const bw = z * 0.4;
@@ -537,7 +532,7 @@ function draw(now) {
   for (const i of s.world.belts) {
     const [ax, ay] = centre(i);
     if (ax < -z || ay < -z || ax > vw + z || ay > vh + z) continue;
-    ctx.strokeStyle = d.conn[i] ? T.belt : '#4a2a2a'; ctx.lineWidth = bw;
+    ctx.strokeStyle = d.conn[i] ? TH.belt : TH.beltBad; ctx.lineWidth = bw;
     ctx.beginPath(); ctx.moveTo(ax, ay);
     let joined = false;
     for (const j of W.neighbours(i)) {
@@ -552,40 +547,39 @@ function draw(now) {
     const nx = d.next[i]; const [ax, ay] = centre(i);
     if (ax < -z || ay < -z || ax > vw + z || ay > vh + z || nx < 0) continue;
     const [bx, by] = centre(nx);
-    ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = TH.dark ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1;
     const ux = (bx - ax) / z; const uy = (by - ay) / z; const m = z * 0.12;
     ctx.beginPath(); ctx.moveTo(ax - ux * m - uy * m, ay - uy * m + ux * m); ctx.lineTo(ax + ux * m * 0.6, ay + uy * m * 0.6); ctx.lineTo(ax - ux * m + uy * m, ay - uy * m - ux * m); ctx.stroke();
     const c = feedCache.get(i);
     if (!c) continue;
-    ctx.fillStyle = c;
     for (let k = 0; k < 2; k++) {
-      const f = ((now / 1000) * 1.3 + k / 2 + hash(i) * 0.01) % 1;
+      const f = TH.still ? k / 2 + 0.25 : ((now / 1000) * 1.3 + k / 2 + hash(i) * 0.01) % 1;
       const px = ax + (bx - ax) * f; const py = ay + (by - ay) * f;
-      ctx.fillRect(px - z * 0.09, py - z * 0.09, z * 0.18, z * 0.18);
+      drawItem(ctx, c, px - z * 0.13, py - z * 0.13, z * 0.26);
     }
   }
   // belt being drawn
   if (beltPath && beltPath.length) {
     for (const i of beltPath) { const [px, py] = toScreen(i % N, (i / N) | 0); const ok = W.revealed(s, i) && d.occ[i] === -1 && !d.grid[i];
-      ctx.fillStyle = ok ? 'rgba(255,154,46,0.55)' : 'rgba(255,107,91,0.35)'; ctx.fillRect(px + z * 0.25, py + z * 0.25, z * 0.5, z * 0.5); }
+      ctx.fillStyle = ok ? TH.accent : TH.bad; ctx.globalAlpha = ok ? 0.6 : 0.4; ctx.fillRect(px + z * 0.25, py + z * 0.25, z * 0.5, z * 0.5); ctx.globalAlpha = 1; }
   }
   // hub
   {
     const [hx, hy] = toScreen(W.C - 1, W.C - 1);
-    ctx.fillStyle = '#2b2218'; rr(hx + 2, hy + 2, z * 3 - 4, z * 3 - 4, z * 0.3); ctx.fill();
-    ctx.strokeStyle = T.accent; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = TH.hubBody; rr(hx + 2, hy + 2, z * 3 - 4, z * 3 - 4, Math.min(z * 0.4, TH.rp * z / 28)); ctx.fill();
+    ctx.strokeStyle = TH.accent; ctx.lineWidth = Math.max(2, z * 0.08); ctx.stroke();
     const P = G.PHASES[Math.min(s.phase, 4)]; const rem = G.remaining(s);
     let tot = 0; let have = 0; for (const k in P.need) { tot += P.need[k]; have += P.need[k] - (rem[k] ?? 0); }
     const frac = s.phase >= 5 ? 1 : have / tot;
     ctx.lineWidth = z * 0.28; ctx.lineCap = 'butt';
     for (let k = 0; k < 5; k++) {
       const a0 = (k / 5) * Math.PI * 2 - Math.PI / 2 + 0.09; const a1 = ((k + 1) / 5) * Math.PI * 2 - Math.PI / 2 - 0.09;
-      ctx.strokeStyle = '#4a3a26'; ctx.beginPath(); ctx.arc(cx, cy, z * 0.95, a0, a1); ctx.stroke();
+      ctx.strokeStyle = TH.dark ? '#4a3a26' : '#3a4650'; ctx.beginPath(); ctx.arc(cx, cy, z * 0.95, a0, a1); ctx.stroke();
       const f = k < s.phase ? 1 : k === s.phase ? frac : 0;
       if (f > 0) { ctx.strokeStyle = T.accent; ctx.beginPath(); ctx.arc(cx, cy, z * 0.95, a0, a0 + (a1 - a0) * f); ctx.stroke(); }
     }
-    ctx.fillStyle = T.ink; ctx.font = `700 ${Math.max(10, z * 0.36)}px ${BAND}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('HUB', cx, cy); ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#ffffff'; ctx.font = `700 ${Math.max(10, z * 0.34)}px ${BAND}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('Hub', cx, cy); ctx.textBaseline = 'alphabetic';
   }
   // buildings
   ctx.lineCap = 'round';
@@ -596,17 +590,27 @@ function draw(now) {
   }
   for (const p of s.world.poles) {
     const [px, py] = centre(p); const live = d.live.has(p);
-    ctx.fillStyle = live ? T.power : '#55606a'; ctx.strokeStyle = '#0b0e10'; ctx.lineWidth = 2;
+    ctx.fillStyle = live ? TH.power : TH.machineOff; ctx.strokeStyle = TH.dark ? TH.fog : '#ffffff'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(px, py, z * 0.18, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.strokeStyle = live ? T.power : '#55606a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px - z * 0.3, py - z * 0.3); ctx.lineTo(px + z * 0.3, py - z * 0.3); ctx.stroke();
+
+  }
+  // the Next marker: a ghost of the suggested machine on the tile it would go, ringed in accent
+  if (nextMark && nextMark.i >= 0) {
+    const [px, py] = toScreen(nextMark.i % N, (nextMark.i / N) | 0);
+    if (nextMark.b) { ctx.globalAlpha = 0.55; drawMachine(ctx, nextMark.b, px, py, z, {}); ctx.globalAlpha = 1; }
+    const pulse = TH.still ? 0 : (Math.sin(now / 400) + 1) / 2;
+    ctx.strokeStyle = TH.accent; ctx.lineWidth = 2.5 + pulse * 1.5; rr(px - 3, py - 3, z + 6, z + 6, z * 0.26); ctx.stroke();
+    if (z >= 18) { const lab = nextMark.b ? 'Next' : 'Fix'; ctx.font = `700 ${Math.max(11, z * 0.36)}px ${BAND}`; const tw = ctx.measureText(lab).width + 10;
+      ctx.fillStyle = TH.accent; rr(px + z / 2 - tw / 2, py - z * 0.5 - 6, tw, Math.max(15, z * 0.46), 4); ctx.fill();
+      ctx.fillStyle = TH.accentInk; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(lab, px + z / 2, py - z * 0.5 - 6 + Math.max(15, z * 0.46) / 2 + 1); ctx.textBaseline = 'alphabetic'; }
   }
   // selection, hover, flashes, floaters
   if (drawer === 'inspect' && sel >= 0) {
     const big = d.occ[sel] === -2; const [px, py] = big ? toScreen(W.C - 1, W.C - 1) : toScreen(sel % N, (sel / N) | 0); const sz = big ? z * 3 : z;
-    ctx.strokeStyle = T.ink; ctx.lineWidth = 2; rr(px - 1, py - 1, sz + 2, sz + 2, z * 0.22); ctx.stroke();
+    ctx.strokeStyle = TH.ink; ctx.lineWidth = 2.5; rr(px - 2, py - 2, sz + 4, sz + 4, z * 0.24); ctx.stroke();
   }
   if (hover >= 0 && placing) { const [px, py] = toScreen(hover % N, (hover / N) | 0); const bad = !!W.whyNot(s, placing, hover);
-    ctx.strokeStyle = bad ? T.bad : T.ink; ctx.lineWidth = 2; ctx.strokeRect(px + 1, py + 1, z - 2, z - 2); }
+    ctx.strokeStyle = bad ? TH.bad : TH.ink; ctx.lineWidth = 2; rr(px + 1, py + 1, z - 2, z - 2, z * 0.14); ctx.stroke(); }
   for (let k = flashes.length - 1; k >= 0; k--) {
     const f = flashes[k]; const age = (now - f.t) / 900; if (age > 1) { flashes.splice(k, 1); continue; }
     const [px, py] = toScreen(f.i % N, (f.i / N) | 0); ctx.strokeStyle = f.c; ctx.globalAlpha = 1 - age; ctx.lineWidth = 3;
@@ -615,52 +619,81 @@ function draw(now) {
   ctx.textAlign = 'center';
   for (let k = floaters.length - 1; k >= 0; k--) {
     const f = floaters[k]; const age = (now - f.t) / 900; if (age > 1) { floaters.splice(k, 1); continue; }
-    const [px, py] = toScreen((f.i % N) + 0.5, ((f.i / N) | 0)); ctx.globalAlpha = 1 - age; ctx.fillStyle = T.ink;
+    const [px, py] = toScreen((f.i % N) + 0.5, ((f.i / N) | 0)); ctx.globalAlpha = 1 - age; ctx.fillStyle = TH.ink;
     ctx.font = `700 15px ${BAND}`; ctx.fillText(f.text, px, py - age * z); ctx.globalAlpha = 1;
   }
 }
 
-function drawBuilding(it, sx, sy, z, now) {
-  const B = G.BUILDINGS[it.b]; const c = colOf(it.b); const k = KIND[it.b] || 'm';
-  const running = it.st === 'on' && (s.stats.util[it.b] ?? 0) > 0.05;
-  const m = z * 0.08; const w = z - 2 * m; const x = sx + m; const y = sy + m; const ccx = sx + z / 2; const ccy = sy + z / 2;
-  const t = now / 1000 * (running ? G.speed(s, it.b) * s.stats.powerFactor : 0);
-  ctx.globalAlpha = it.st === 'unlinked' ? 0.55 : 1;
-  ctx.fillStyle = it.st === 'nopower' || it.st === 'off' ? '#262c32' : T.metal;
-  if (k === 'x' || k === 'g') { ctx.beginPath(); ctx.arc(ccx, ccy, w / 2, 0, Math.PI * 2); ctx.fill(); }
-  else { rr(x, y, w, w, z * 0.16); ctx.fill(); }
-  ctx.strokeStyle = c; ctx.lineWidth = Math.max(1.5, z * 0.07); ctx.stroke();
-  if (k === 'x') { // drill head, spins when running
-    ctx.save(); ctx.translate(ccx, ccy); ctx.rotate(t * 2.5); ctx.fillStyle = c;
-    for (let a = 0; a < 3; a++) { ctx.rotate((Math.PI * 2) / 3); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(w * 0.32, -w * 0.09); ctx.lineTo(w * 0.32, w * 0.09); ctx.fill(); }
-    ctx.restore();
-  } else if (k === 'f') { // furnace mouth glows
-    const g = running ? 0.55 + 0.35 * Math.sin(now / 260 + it.i) : 0.15;
-    ctx.fillStyle = c; ctx.globalAlpha *= g; rr(x + w * 0.25, y + w * 0.3, w * 0.5, w * 0.42, z * 0.06); ctx.fill(); ctx.globalAlpha = it.st === 'unlinked' ? 0.55 : 1;
-    ctx.fillStyle = '#1a1f24'; ctx.fillRect(x + w * 0.2, y + w * 0.12, w * 0.6, w * 0.1);
-  } else if (k === 'g') { // generator: bolt, turbine blades turn
-    if (it.b === 'turbine') { ctx.save(); ctx.translate(ccx, ccy); ctx.rotate(t * 4); ctx.strokeStyle = 'rgba(89,200,255,0.5)'; ctx.lineWidth = z * 0.05;
-      for (let a = 0; a < 4; a++) { ctx.rotate(Math.PI / 2); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(w * 0.42, 0); ctx.stroke(); } ctx.restore(); }
-    ctx.fillStyle = running || it.b !== 'burner' ? T.power : '#55606a';
-    ctx.beginPath(); ctx.moveTo(ccx + w * 0.06, ccy - w * 0.3); ctx.lineTo(ccx - w * 0.16, ccy + w * 0.04); ctx.lineTo(ccx, ccy + w * 0.04); ctx.lineTo(ccx - w * 0.06, ccy + w * 0.3); ctx.lineTo(ccx + w * 0.16, ccy - w * 0.04); ctx.lineTo(ccx, ccy - w * 0.04); ctx.closePath(); ctx.fill();
-  } else if (k === 's') { // solar panel cells
-    ctx.fillStyle = '#1d3f5c'; ctx.fillRect(x + w * 0.14, y + w * 0.14, w * 0.72, w * 0.72);
-    ctx.strokeStyle = 'rgba(89,200,255,0.6)'; ctx.lineWidth = 1;
-    for (let q = 1; q < 3; q++) { ctx.beginPath(); ctx.moveTo(x + w * (0.14 + q * 0.24), y + w * 0.14); ctx.lineTo(x + w * (0.14 + q * 0.24), y + w * 0.86); ctx.moveTo(x + w * 0.14, y + w * (0.14 + q * 0.24)); ctx.lineTo(x + w * 0.86, y + w * (0.14 + q * 0.24)); ctx.stroke(); }
-  } else { // maker: output swatch and a cycle bar
-    ctx.fillStyle = c; rr(ccx - w * 0.17, y + w * 0.18, w * 0.34, w * 0.34, z * 0.04); ctx.fill();
-    ctx.fillStyle = '#1a1f24'; ctx.fillRect(x + w * 0.15, y + w * 0.68, w * 0.7, w * 0.12);
-    if (running) { const f = (t / B.time) % 1; ctx.fillStyle = c; ctx.fillRect(x + w * 0.15, y + w * 0.68, w * 0.7 * f, w * 0.12); }
+// one machine glyph, used on the map and (at rest) for hotbar and drawer icons
+function drawItem(g, k, x, y, size, alpha = 1) {
+  g.save(); g.translate(x, y); g.scale(size, size); g.globalAlpha *= alpha; g.fillStyle = COL[k]; g.fill(PATH[k], 'evenodd');
+  if (!TH.dark) { g.strokeStyle = TH.ink; g.lineWidth = 0.08; g.lineJoin = 'round'; g.stroke(PATH[k]); }
+  g.restore();
+}
+function hexPath(g, cx, cy, r) { g.beginPath(); for (let a = 0; a < 6; a++) { const t = (a / 6) * Math.PI * 2 + Math.PI / 6; g[a ? 'lineTo' : 'moveTo'](cx + r * Math.cos(t), cy + r * Math.sin(t)); } g.closePath(); }
+function drawMachine(g, b, sx, sy, z, o = {}) {
+  const B = G.BUILDINGS[b]; const k = KIND[b] || 'm'; const out = outOf(b);
+  const m = z * 0.07; const w = z - 2 * m; const x = sx + m; const y = sy + m; const cx = sx + z / 2; const cy = sy + z / 2;
+  const off = o.off; const t = o.t || 0; const run = o.running; const lod = z >= 20;
+  const body = off ? TH.machineOff : TH.machine; const rad = Math.min(z * 0.2, TH.rc * z / 28);
+  g.fillStyle = body; g.strokeStyle = TH.machineEdge; g.lineWidth = Math.max(1, z * 0.04);
+  if (k === 'x') { g.beginPath(); g.arc(cx, cy, w / 2, 0, Math.PI * 2); g.fill(); }
+  else if (k === 'g') { hexPath(g, cx, cy, w / 2); g.fill(); }
+  else if (k === 'f') { // body with a chimney notch top-right
+    g.beginPath(); g.roundRect(x, y + w * 0.14, w, w * 0.86, rad); g.fill();
+    g.fillRect(x + w * 0.66, y, w * 0.22, w * 0.3);
+  } else { g.beginPath(); g.roundRect(x, y, w, w, rad); g.fill(); }
+  if (!TH.dark) { g.stroke(); }
+  const tok = (sz, a) => drawItem(g, out, cx - sz / 2, cy - sz / 2 + (k === 'f' ? w * 0.07 : 0), sz, a);
+  if (k === 'x') { // drill bit turns when running, token in the middle
+    if (lod) { g.save(); g.translate(cx, cy); g.rotate(t * 2.5); g.fillStyle = TH.dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.28)';
+      for (let a = 0; a < 3; a++) { g.rotate((Math.PI * 2) / 3); g.beginPath(); g.moveTo(w * 0.2, -w * 0.08); g.lineTo(w * 0.46, 0); g.lineTo(w * 0.2, w * 0.08); g.fill(); } g.restore(); }
+    tok(w * 0.5);
+  } else if (k === 'f') tok(w * 0.5, off ? 0.5 : run || !lod ? 1 : 0.6);
+  else if (k === 'g') {
+    g.save(); g.translate(cx, cy);
+    if (b === 'turbine') { g.rotate(t * 3); g.fillStyle = TH.power; for (let a = 0; a < 3; a++) { g.rotate((Math.PI * 2) / 3); g.beginPath(); g.ellipse(0, -w * 0.18, w * 0.08, w * 0.17, 0, 0, Math.PI * 2); g.fill(); } g.beginPath(); g.arc(0, 0, w * 0.06, 0, Math.PI * 2); g.fill(); }
+    else { const f = run && lod ? 1 + 0.06 * Math.sin(t * 9) : 1; g.scale(f, f); g.fillStyle = off ? TH.ink2 : TH.power; // flame: two tongues
+      g.beginPath(); g.moveTo(-w * 0.04, -w * 0.34); g.quadraticCurveTo(w * 0.04, -w * 0.12, w * 0.12, -w * 0.08); g.quadraticCurveTo(w * 0.14, -w * 0.2, w * 0.1, -w * 0.26);
+      g.quadraticCurveTo(w * 0.3, -w * 0.06, w * 0.24, w * 0.12); g.quadraticCurveTo(w * 0.18, w * 0.3, 0, w * 0.3); g.quadraticCurveTo(-w * 0.2, w * 0.3, -w * 0.24, w * 0.1);
+      g.quadraticCurveTo(-w * 0.26, -w * 0.12, -w * 0.04, -w * 0.34); g.fill();
+      g.fillStyle = off ? TH.machineOff : TH.machine; g.beginPath(); g.ellipse(0, w * 0.14, w * 0.08, w * 0.11, 0, 0, Math.PI * 2); g.fill(); }
+    g.restore();
+  } else if (k === 's') {
+    g.fillStyle = TH.power; const c = w * 0.3; for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) g.fillRect(x + w * 0.16 + i * (c + w * 0.08), y + w * 0.16 + j * (c + w * 0.08), c, c);
+  } else { // maker: input pips on the left, token, cycle bar
+    const ins = Object.keys(B.in).length; tok(w * 0.46);
+    if (lod) { g.fillStyle = TH.dark ? TH.ink2 : '#ffffff'; for (let i = 0; i < ins; i++) g.fillRect(x + w * 0.05, y + w * (0.2 + i * 0.2), w * 0.08, w * 0.12);
+      if (run) { g.fillStyle = COL[out]; g.fillRect(x + w * 0.18, y + w * 0.84, w * 0.64 * ((t / B.time) % 1), w * 0.07); } }
   }
-  ctx.globalAlpha = 1;
-  // status marks
-  if (it.st === 'unlinked') { ctx.strokeStyle = T.bad; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); rr(sx + 1, sy + 1, z - 2, z - 2, z * 0.18); ctx.stroke(); ctx.setLineDash([]); }
-  else if (it.st === 'nopower') { ctx.fillStyle = T.warn; const bx = sx + z * 0.78; const by = sy + z * 0.22; const r = z * 0.17;
-    ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#1a1000';
-    ctx.beginPath(); ctx.moveTo(bx + r * 0.2, by - r * 0.7); ctx.lineTo(bx - r * 0.4, by + r * 0.1); ctx.lineTo(bx, by + r * 0.1); ctx.lineTo(bx - r * 0.2, by + r * 0.7); ctx.lineTo(bx + r * 0.4, by - r * 0.1); ctx.lineTo(bx, by - r * 0.1); ctx.fill(); }
-  else if (z >= 22) {
-    const [, cls] = status(it); ctx.fillStyle = stColour[cls]; ctx.strokeStyle = '#0b0e10'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(sx + z * 0.8, sy + z * 0.2, Math.max(4, z * 0.13), 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+}
+const iconCache = {};
+function iconURL(b) {
+  if (iconCache[b]) return iconCache[b];
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  drawMachine(g, b, 0, 0, 64, { running: true }); return (iconCache[b] = c.toDataURL());
+}
+function drawBuilding(it, sx, sy, z, now) {
+  const running = it.st === 'on' && (s.stats.util[it.b] ?? 0) > 0.05;
+  const t = TH.still ? 0 : now / 1000 * (running ? G.speed(s, it.b) * s.stats.powerFactor : 0);
+  drawMachine(ctx, it.b, sx, sy, z, { off: it.st === 'off' || it.st === 'nopower', running, t });
+  // status marks, only when something needs the player; each has its own shape
+  const r = Math.max(4.5, z * 0.17); const bx = sx + z * 0.84; const by = sy + z * 0.16;
+  if (it.st === 'unlinked') { // broken outline
+    ctx.strokeStyle = TH.bad; ctx.lineWidth = Math.max(2, z * 0.08); ctx.setLineDash([z * 0.22, z * 0.12]);
+    ctx.beginPath(); ctx.roundRect(sx + 1, sy + 1, z - 2, z - 2, z * 0.18); ctx.stroke(); ctx.setLineDash([]);
+  } else if (it.st === 'nopower') {
+    ctx.fillStyle = TH.bad; ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(bx + r * 0.2, by - r * 0.7); ctx.lineTo(bx - r * 0.4, by + r * 0.1); ctx.lineTo(bx, by + r * 0.1); ctx.lineTo(bx - r * 0.2, by + r * 0.7); ctx.lineTo(bx + r * 0.4, by - r * 0.1); ctx.lineTo(bx, by - r * 0.1); ctx.fill();
+  } else if (it.st === 'off') {
+    ctx.fillStyle = TH.surface; ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = TH.ink2; ctx.fillRect(bx - r * 0.42, by - r * 0.45, r * 0.3, r * 0.9); ctx.fillRect(bx + r * 0.12, by - r * 0.45, r * 0.3, r * 0.9);
+  } else {
+    const [, cls] = status(it);
+    if ((cls === 'warn' && s.stats.powerFactor >= 0.98 && (s.stats.util[it.b] ?? 0) < 0.5) || cls === 'bad') { // starved or no coal: triangle notch
+      ctx.fillStyle = cls === 'bad' ? TH.bad : TH.warn; ctx.strokeStyle = TH.dark ? TH.fog : TH.ink; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(bx, by - r); ctx.lineTo(bx + r, by + r * 0.75); ctx.lineTo(bx - r, by + r * 0.75); ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
   }
 }
 
@@ -673,6 +706,7 @@ frame0();
 showSheet();
 if (params.has('inspect')) { const it = s.world.items.find((x) => x.b === params.get('inspect')) || s.world.items[0]; if (it) { sel = it.i; centreOn(it.i); openDrawer('inspect'); } }
 if (params.has('zoom')) cam.z = Number(params.get('zoom'));
+if (params.has('tool')) setTool(params.get('tool'));
 let lastT = performance.now(); let acc = 0; let lastSave = 0; let lastRender = 0;
 function frame(t) {
   const dt = Math.min(1, (t - lastT) / 1000); lastT = t; acc += dt;

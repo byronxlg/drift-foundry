@@ -67,6 +67,11 @@ without touching a save.
 roughly 4 m, 25 m, 1 h, 2-4 h, 5-6 h. Away time counts at full rate up to the cap, which is the
 idle part.
 
+## Design system
+
+The UI system (roles, items, glyph language, type, space, components, two directions) is in
+[design-system.md](design-system.md).
+
 ## Builder (preview at `?ui=build`)
 
 Byron, 2026-11-08, on directions A and B: "I want it to look like a full screen app no scrolling.
