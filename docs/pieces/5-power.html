@@ -1,0 +1,111 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Piece 5, power, 2026-11-08. How power reach looks. Machines and the no-power badge are drawn by the
+game's own drawMachine (sliced from src/build.js at load). Render: serve the repo root, open
+docs/pieces/5-power.html at 1080 px wide, screenshot the page to 5-power.png. -->
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Archivo+Narrow:wght@600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#b9bfc2;font-family:Archivo,sans-serif;color:#162026;width:1080px}
+.h{padding:30px 36px 24px;background:#fff}
+.h .prog{font:600 20px/1.2 Archivo;color:#56616a;margin:0 0 10px}
+.h h1{font:700 44px/1.05 "Archivo Narrow";margin:0}
+.h p{font:400 25px/1.35 Archivo;margin:12px 0 0;color:#162026}
+.opt{background:#fff;margin:14px 0 0;padding:22px 36px 28px}
+.opt h2{font:700 40px/1 "Archivo Narrow";margin:0 0 8px;display:flex;align-items:center;gap:14px}
+.opt h2 .pick{font:700 20px/1 Archivo;background:#2346d8;color:#fff;border-radius:8px;padding:7px 12px}
+.opt p{font:400 25px/1.35 Archivo;margin:0 0 16px}
+canvas{display:block;border-radius:12px;width:1008px;height:432px}
+.f{background:#fff;margin:14px 0 0;padding:20px 36px 26px;font:600 25px/1.35 Archivo}
+.f b{color:#2346d8}
+</style></head><body>
+<div class="h"><p class="prog">Piece 5 of 10. Done: items, machines, supply lines, ground.</p>
+<h1>Power</h1>
+<p>Same corner in each: the Hub, a burner fed by coal, two poles carrying power out to a press, and a wire drawer past the end of the power (red bolt). The burner is tapped, which is when power shows today.</p></div>
+<div id="opts"></div>
+<div class="f">My pick: <b>C</b>. The wires show where each pole gets its power, so you can see why the wire drawer is dark and where the next pole goes.</div>
+<script type="module">
+import { THEME as TH, SHAPE } from '../../src/theme.js';
+import * as G from '../../src/game.js';
+// the game's own machine drawing, sliced out of src/build.js
+const src = await (await fetch('../../src/build.js')).text();
+const body = src.slice(src.indexOf('function drawItem(g, k'), src.indexOf('const iconCache'));
+const PATH = {}; for (const k in SHAPE) PATH[k] = new Path2D(SHAPE[k]);
+const KIND = { drill: 'x', coaldrill: 'x', quarry: 'x', quartzdrill: 'x', smelter: 'f', kiln: 'f', refinery: 'f', burner: 'g', turbine: 'g', solar: 's' };
+const outItem = (b) => Object.keys(G.BUILDINGS[b].out)[0]; const outOf = (b) => G.BUILDINGS[b].gen ? '' : outItem(b);
+const { drawMachine, drawItem } = new Function('TH', 'COL', 'COL_ON', 'PATH', 'G', 'KIND', 'outOf', body + 'return { drawMachine, drawItem };')(TH, TH.items, TH.itemsOn, PATH, G, KIND, outOf);
+
+const Z = 36, NX = 28, NY = 12, W = NX * Z, H = NY * Z;
+const REACH = { hub: 7.5, burner: 4.5, pole: 5.5 }; // src/world.js
+const HUBC = [3, 5]; // hub centre tile; hub covers 2..4 x 4..6
+const ORE = [[1, 0], [2, 0], [1, 1], [2, 1], [0, 1], [2, 2], [3, 1]];
+const COAL = [[8, 9], [9, 9], [10, 9], [9, 10], [10, 10]];
+const BURN = [13, 9];
+const M = [['drill', 1, 1], ['drill', 2, 1], ['smelter', 6, 2], ['coaldrill', 9, 9], ['burner', ...BURN], ['press', 24, 4], ['drawer', 26, 11]];
+const POLES = [[16, 6], [21, 5]];
+const SOURCES = [[...HUBC, REACH.hub], [...BURN, REACH.burner], ...POLES.map(([x, y]) => [x, y, REACH.pole])];
+const WIRES = [[BURN, POLES[0]], [POLES[0], POLES[1]]]; // each pole to what makes it live
+const covered = (x, y) => SOURCES.some(([sx, sy, r]) => Math.hypot(x - sx, y - sy) <= r);
+const ctr = (x, y) => [x * Z + Z / 2, y * Z + Z / 2];
+
+function patch(g, tiles, col) { // piece 3 field: rounded, with a rim
+  const o = document.createElement('canvas'); o.width = W * 2; o.height = H * 2; const q = o.getContext('2d'); q.scale(2, 2); q.fillStyle = col;
+  for (const [x, y] of tiles) { q.beginPath(); q.arc(...ctr(x, y), Z * .72, 0, 7); q.fill(); }
+  const e = document.createElement('canvas'); e.width = W * 2; e.height = H * 2; const eg = e.getContext('2d'); eg.drawImage(o, 0, 0); eg.globalCompositeOperation = 'destination-in';
+  for (let k = 0; k < 8; k++) { const t = k / 8 * Math.PI * 2; eg.drawImage(o, Math.cos(t) * 4, Math.sin(t) * 4); }
+  const r = document.createElement('canvas'); r.width = W * 2; r.height = H * 2; const rg = r.getContext('2d'); rg.drawImage(o, 0, 0); rg.globalCompositeOperation = 'destination-out'; rg.drawImage(e, 0, 0);
+  g.save(); g.globalAlpha = TH.nodeAlpha; g.drawImage(e, 0, 0, W, H); g.globalAlpha = TH.rimAlpha; g.drawImage(r, 0, 0, W, H); g.restore();
+}
+function lumps(g, x, y, k) { const h = ((y * 64 + x + 7) * 2654435761 >>> 0 ^ ((y * 64 + x + 7) * 2654435761 >>> 0) >>> 13) & 255; const f = h / 255;
+  drawItem(g, k, x * Z + Z * (.1 + f * .15), y * Z + Z * .14, Z * .42); drawItem(g, k, x * Z + Z * .5, y * Z + Z * (.45 + f * .1), Z * .34); }
+function lines(g) {
+  const L = [[[1, 1], [6, 2], 'ore'], [[2, 1], [6, 2], 'ore'], [[6, 2], [4, 4], 'ingot'], [[9, 9], BURN, 'coal'], [[6, 2], [24, 4], 'ingot']];
+  g.strokeStyle = TH.supply; g.lineWidth = Z * .09; g.lineJoin = g.lineCap = 'round';
+  for (const [a, b, k] of L) { const p = [ctr(...a), ctr(b[0], a[1]), ctr(...b)]; g.beginPath(); g.moveTo(...p[0]); g.lineTo(...p[1]); g.lineTo(...p[2]); g.stroke();
+    const len = Math.abs(p[1][0] - p[0][0]) + Math.abs(p[2][1] - p[1][1]);
+    for (const f of [.3, .7]) { let dd = f * len; const s = dd <= Math.abs(p[1][0] - p[0][0]) ? 0 : 1; if (s) dd -= Math.abs(p[1][0] - p[0][0]); const seg = Math.abs(p[s + 1][0] - p[s][0]) + Math.abs(p[s + 1][1] - p[s][1]) || 1; const t = dd / seg;
+      drawItem(g, k, p[s][0] + (p[s + 1][0] - p[s][0]) * t - Z * .15, p[s][1] + (p[s + 1][1] - p[s][1]) * t - Z * .15, Z * .3); } }
+}
+function hub(g) { const hx = (HUBC[0] - 1) * Z, hy = (HUBC[1] - 1) * Z; g.fillStyle = TH.hubBody; g.beginPath(); g.roundRect(hx + 2, hy + 2, Z * 3 - 4, Z * 3 - 4, 12); g.fill(); g.strokeStyle = TH.accent; g.lineWidth = 3; g.stroke();
+  g.lineWidth = Z * .28; for (let k = 0; k < 5; k++) { const a0 = k / 5 * Math.PI * 2 - Math.PI / 2 + .09, a1 = (k + 1) / 5 * Math.PI * 2 - Math.PI / 2 - .09; g.strokeStyle = '#3a4650'; g.beginPath(); g.arc(hx + Z * 1.5, hy + Z * 1.5, Z * .95, a0, a1); g.stroke(); if (k < 2) { g.strokeStyle = TH.accent; g.beginPath(); g.arc(hx + Z * 1.5, hy + Z * 1.5, Z * .95, a0, k === 0 ? a1 : a0 + (a1 - a0) * .3); g.stroke(); } }
+  g.fillStyle = '#fff'; g.font = '700 15px "Archivo Narrow"'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('Hub', hx + Z * 1.5, hy + Z * 1.5); }
+function noPower(g, sx, sy) { const z = Z, r = Math.max(4.5, z * 0.17), bx = sx + z * 0.84, by = sy + z * 0.16; // as drawBuilding
+  g.fillStyle = TH.bad; g.beginPath(); g.arc(bx, by, r, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#ffffff'; g.beginPath(); g.moveTo(bx + r * 0.2, by - r * 0.7); g.lineTo(bx - r * 0.4, by + r * 0.1); g.lineTo(bx, by + r * 0.1); g.lineTo(bx - r * 0.2, by + r * 0.7); g.lineTo(bx + r * 0.4, by - r * 0.1); g.lineTo(bx, by - r * 0.1); g.fill(); }
+// smooth reach: one disc per source (a tile is in when its centre is inside), laid once, with a rim
+function reachSmooth(g) {
+  const o = document.createElement('canvas'); o.width = W * 2; o.height = H * 2; const q = o.getContext('2d'); q.scale(2, 2); q.fillStyle = TH.power;
+  q.beginPath(); for (const [x, y, r] of SOURCES) { const [cx, cy] = ctr(x, y); q.moveTo(cx + r * Z, cy); q.arc(cx, cy, r * Z, 0, 7); } q.fill();
+  const e = document.createElement('canvas'); e.width = W * 2; e.height = H * 2; const eg = e.getContext('2d'); eg.drawImage(o, 0, 0); eg.globalCompositeOperation = 'destination-in';
+  for (let k = 0; k < 8; k++) { const t = k / 8 * Math.PI * 2; eg.drawImage(o, Math.cos(t) * 4, Math.sin(t) * 4); }
+  const r = document.createElement('canvas'); r.width = W * 2; r.height = H * 2; const rg = r.getContext('2d'); rg.drawImage(o, 0, 0); rg.globalCompositeOperation = 'destination-out'; rg.drawImage(e, 0, 0);
+  g.save(); g.globalAlpha = 0.14; g.drawImage(e, 0, 0, W, H); g.globalAlpha = 0.55; g.drawImage(r, 0, 0, W, H); g.restore();
+}
+
+function draw(g, opt) {
+  g.fillStyle = TH.terrain; g.fillRect(0, 0, W, H);
+  patch(g, ORE, TH.items.ore); patch(g, COAL, TH.items.coal);
+  for (const [x, y] of ORE) lumps(g, x, y, 'ore'); for (const [x, y] of COAL) lumps(g, x, y, 'coal');
+  if (opt === 'A') { g.fillStyle = TH.powerSoft; g.beginPath(); for (let y = 0; y < NY; y++) for (let x = 0; x < NX; x++) if (covered(x, y)) g.rect(x * Z, y * Z, Z + .5, Z + .5); g.fill(); }
+  else reachSmooth(g);
+  lines(g);
+  if (opt === 'C') { g.strokeStyle = TH.power; g.lineWidth = 2.5; g.lineCap = 'round'; for (const [a, b] of WIRES) { const p = ctr(...a), q = ctr(...b); g.beginPath(); g.moveTo(...p); g.lineTo(...q); g.stroke(); } }
+  hub(g);
+  for (const [b, x, y] of M) { const dead = G.BUILDINGS[b].power && !covered(x, y); drawMachine(g, b, x * Z, y * Z, Z, { off: dead, running: !dead, t: 0.4 }); if (dead) noPower(g, x * Z, y * Z); }
+  for (const p of POLES) { const [px, py] = ctr(...p); g.fillStyle = TH.power; g.strokeStyle = '#ffffff'; g.lineWidth = 2; g.beginPath(); g.arc(px, py, Z * .18, 0, 7); g.fill(); g.stroke(); }
+  // the tapped burner: ink ring, as the game draws selection
+  g.strokeStyle = TH.ink; g.lineWidth = 2.5; g.beginPath(); g.roundRect(BURN[0] * Z - 2, BURN[1] * Z - 2, Z + 4, Z + 4, Z * .24); g.stroke();
+}
+const OPTS = [
+  ['A', 'Teal squares show where power reaches, only while you tap a generator or hold a machine. This is how it looks now.'],
+  ['B', 'Power shows as one soft teal area with a smooth edge, like the ore fields.'],
+  ['C', 'The same soft area, plus a thin teal wire from each pole back to what powers it, always on the map.', true],
+];
+await document.fonts.load('700 17px "Archivo Narrow"');
+for (const [k, txt, pick] of OPTS) {
+  const sec = document.createElement('section'); sec.className = 'opt';
+  sec.innerHTML = `<h2>${k}${pick ? '<span class="pick">My pick</span>' : ''}</h2><p>${txt}</p>`;
+  const cv = document.createElement('canvas'); cv.width = W * 2; cv.height = H * 2; sec.append(cv);
+  document.getElementById('opts').append(sec);
+  const g = cv.getContext('2d'); g.scale(2, 2); draw(g, k);
+}
+document.body.dataset.ready = '1';
+</script></body></html>

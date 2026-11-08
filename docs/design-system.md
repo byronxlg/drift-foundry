@@ -63,9 +63,9 @@ Every colour on screen is one of these. Values in `src/theme.js`.
 
 | Role | Used for |
 | --- | --- |
-| `fog` | outside the surveyed rock |
-| `terrain`, `terrain2` | surveyed rock (two tones for texture, no seams) |
-| `next` | the ring that opens next, one tone off fog |
+| `fog` | past the ring that opens next |
+| `terrain` | surveyed rock, one disc with no seams, ended by a smooth `ink2` line |
+| `next`, `hatch`, `edgeNext` | the ring that opens next: one tone off fog, faint diagonal hatching, a dashed outer line |
 | `surface` | HUD, dock, drawer |
 | `raised` | controls on a surface (cards, tool slots, advice) |
 | `ink`, `ink2` | text; ink2 for secondary only, never running text |
@@ -136,10 +136,20 @@ never confused with stone's chunk).
   selected tiles. Status marks are drawn at every size. Zoom range 16 to 64 px per tile.
 - Tiles: no seams, no grid lines. With a tool in hand, tiles where the machine would run at once fill
   with `accentSoft` and a centre dot; tiles that are valid but need a pole get a faint dot only; invalid tiles stay plain and a tap names
-  why. Power reach is a `powerSoft` fill on the covered tiles, no circles (twenty overlapping circles read as a web of lines).
+  why. Power reach is a `powerSoft` fill on the covered tiles (one path, so no seams where tiles meet), no circles (twenty overlapping circles read as a web of lines).
 - Rings: the selected tile gets an `ink` ring; the tile Next points at gets a one-off `accent`
   flash that expands and fades. The two never look alike.
-- Nodes: a patch in the deep item tone at 16% alpha plus two chunks in the item's shape.
+- Nodes: each field (a group of touching node tiles) is one rounded patch, overlapping discs of
+  0.72 tile, in the deep item tone at 18% (`nodeAlpha`) with a thin rim of the same tone at 60%
+  (`rimAlpha`, `rimW` 0.052 tile); every node tile carries two chunks in the item's shape. Fields
+  in the next ring are drawn at `nextDim` with their chunks at `nextNode`; none past it. Each
+  field is drawn once per zoom step to its own off-screen canvas, one image per field per frame.
+- Ground, piece 3, Byron's pick C (2026-11-08, #19364888): the surveyed rock is a disc around the
+  Hub ended by a smooth `ink2` line (`edgeW` 2.5 px); a tile is buildable when its centre is
+  inside the line (the same rule as `W.revealed`, so what is inside the line is what you can
+  build on). The ring that opens next is shaded and hatched inside a dashed line, labelled "Opens
+  when <segment> is in" in a white pill at the first spot in the ring where it fits on screen.
+  Power reach is clipped to the line.
 
 ## Type
 

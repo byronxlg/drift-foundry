@@ -16,12 +16,17 @@ const ITEMS_ON = {
 
 export const THEME = {
   name: 'Survey chart', dark: false,
-  fog: '#b9bfc2', terrain: '#eef0ef', terrain2: '#eef0ef', next: '#cdd2d4', nextNode: 0.3,
+  fog: '#b9bfc2', terrain: '#eef0ef', next: '#cdd2d4',
   surface: '#ffffff', raised: '#eef0f1', line: '#dde1e3',
   ink: '#162026', ink2: '#56616a', accent: '#2346d8', accentInk: '#ffffff', accentSoft: 'rgba(35,70,216,0.24)',
   power: '#00897b', powerSoft: 'rgba(0,137,123,0.14)', ok: '#18803f', warn: '#c77800', bad: '#d1242f', badSoft: '#fde4e4',
   machine: '#2c353c', machineOff: '#9aa3a9', machineEdge: '#162026', supply: '#a3acb2', hubBody: '#162026',
-  nodeAlpha: 0.16, glyph: 'line',
+  glyph: 'line',
+  // Piece 3 (ground, #19364888): fields are one rounded patch with a rim, the surveyed rock ends in a
+  // smooth ink2 line (edgeW px), the next ring is hatched inside a dashed edgeNext line and its
+  // fields drawn at nextDim, their lumps at nextNode. rimW is the rim as a fraction of a tile.
+  nodeAlpha: 0.18, rimAlpha: 0.6, rimW: 0.052, nextDim: 0.55, nextNode: 0.35,
+  edgeW: 2.5, edgeNext: 'rgba(86,97,106,0.6)', hatch: 'rgba(22,32,38,0.08)', labelBg: 'rgba(255,255,255,0.92)',
   items: ITEMS, itemsOn: ITEMS_ON,
   font: '"Archivo", system-ui, sans-serif', fig: '"Archivo Narrow", "Archivo", system-ui, sans-serif',
   fonts: 'family=Archivo:wght@400;600;700&family=Archivo+Narrow:wght@600;700',
