@@ -28,8 +28,10 @@ export const THEME = {
   nodeAlpha: 0.18, rimAlpha: 0.6, rimW: 0.052, nextDim: 0.55, nextNode: 0.35,
   edgeW: 2.5, edgeNext: 'rgba(86,97,106,0.6)', hatch: 'rgba(22,32,38,0.08)', labelBg: 'rgba(255,255,255,0.92)',
   items: ITEMS, itemsOn: ITEMS_ON,
-  font: '"Archivo", system-ui, sans-serif', fig: '"Archivo Narrow", "Archivo", system-ui, sans-serif',
-  fonts: 'family=Archivo:wght@400;600;700&family=Archivo+Narrow:wght@600;700',
+  // Piece 7 (type, #19364893): one plain font for words and figures; fig stays as a name so
+  // figures keep tabular numbers, it is the same family as font.
+  font: '"Archivo", system-ui, sans-serif', fig: '"Archivo", system-ui, sans-serif',
+  fonts: 'family=Archivo:wght@400;600;700',
   rc: 10, rp: 16, scrim: 'rgba(22,32,38,0.45)',
 };
 

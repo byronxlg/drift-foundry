@@ -158,7 +158,8 @@ never confused with stone's chunk).
 
 ## Type
 
-One family, two widths where the family has them. Five sizes, far apart:
+One plain font, Archivo, for words and figures alike (piece 7, Byron picked C, #19364893). Five
+sizes, far apart:
 
 | Step | Size | Use |
 | --- | --- | --- |
@@ -207,7 +208,7 @@ kept below for the record. Both shared the same structure, components and glyph 
 - **B, Survey chart.** Light: the rock as a printed survey chart on pale cool stone, buildings in
   dark ink with item-colour tokens, panels white, accent cobalt (the surveyor's pencil, far from
   `bad` red), power teal, rounder
-  (control 10, panel 16). Figures in Archivo with its narrow width. Reads like a plan you are
+  (control 10, panel 16). Words and figures in plain Archivo. Reads like a plan you are
   drawing on, and holds up in daylight on a phone.
 
 ## State map
