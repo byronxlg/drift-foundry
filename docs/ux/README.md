@@ -21,7 +21,7 @@ Taken from the lessons of the design system run (bot msg 1559), to be tested her
 
 | # | Decision | Status |
 | --- | --- | --- |
-| 1 | The whole game: the five segments from start to finish, what each needs and opens, and where the player sees that road | steps written, waiting on yes |
+| 1 | The whole game: the five segments from start to finish, what each needs and opens, and where the player sees that road | drawn (`1-road.png`), waiting on his pick |
 | 2 | First minutes: how a new player learns what to do (the advice line as now, a few guided steps, or nothing) | proposed |
 | 3 | Building: pick a machine, place it, place again, cancel | proposed |
 | 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed |
@@ -59,3 +59,13 @@ Proposed steps, for Byron's yes:
    until reached, so the build bar never shows locked clutter.
 4. Close goes back to the map. A new game opens this list once, so the first thing a player sees
    is where the game ends.
+
+Byron, 2026-11-09 (#19364900), on the steps: "I want this to be visual". So the list is drawn,
+`1-road.png` (real phone, `?demo=3`, Lattice under way, made by `1-road-shots.cjs` and `1-road.html`):
+
+- A: as now, the small ring in the top bar and only the current segment.
+- B: tap the ring, a road top to bottom. Done stops ticked; the current one with its parts and bars;
+  ahead stops with their parts as item shapes and the machines they let you build as greyed
+  pictures; ends at "The rock leaves". (pick)
+- C: tap the ring, the ring drawn big and filling, the parts each segment needs listed below with
+  item shapes; no machines.
