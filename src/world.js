@@ -1,9 +1,11 @@
-// Drift Foundry builder: the spatial layer. Pure, no DOM. Used by src/build.js and sim/balance.mjs.
+// Drift Foundry: the spatial layer. Pure, no DOM. Used by src/build.js and sim/balance.mjs.
 //
-// The economy in game.js stays the source of truth. This module owns the map (nodes, placed
-// buildings, belts, power poles) and, after every change, writes the effective building counts
-// into s.built: a building counts only when it is on the Hub network and, if it draws power,
-// inside power reach. s.placed holds what is on the map, which is what costs grow with.
+// The economy in game.js holds the stock and the rules. This module owns the map (nodes, placed
+// machines, supply lines, power poles), runs the flow along the lines, and after every change
+// writes the effective building counts into s.built: a machine counts when it is not stood by
+// and, if it draws power, sits inside power reach. s.placed holds what is on the map, which is
+// what costs grow with. Belts (tile by tile to the Hub) were the mechanic until 2026-11-08, when
+// supply lines became the game (#19364887); an old belt save is laid out again with lines.
 import * as G from './game.js';
 
 export const N = 64; // map is N x N tiles
@@ -31,7 +33,6 @@ function nb4(i) {
   return out;
 }
 export const neighbours = nb4;
-
 // ---------- the rock: resource nodes, deterministic from the seed ----------
 // [phase they appear in, item code, tiles, min distance, max distance]
 const PATCHES = [
@@ -80,62 +81,47 @@ export function nodes(seed) {
 }
 
 // ---------- world state ----------
-export function newWorld(seed = (Math.random() * 2 ** 31) | 0, mode = '') {
-  const w = { v: 1, seed, items: [], belts: [], poles: [] };
-  if (mode === 'lines') { w.mode = 'lines'; w.lines = []; }
-  return w;
+export function newWorld(seed = (Math.random() * 2 ** 31) | 0) {
+  return { v: 1, mode: 'lines', seed, items: [], poles: [], lines: [] };
 }
-export const isLines = (s) => !!(s.world && s.world.mode === 'lines');
+// Read a saved world. Only supply-line worlds load; a belt world (no mode) throws, and the caller
+// lays its machines out again with lines (layOut, countsOf).
 export function loadWorld(raw) {
-  if (!raw || raw.v !== 1 || !Number.isInteger(raw.seed) || !Array.isArray(raw.items)) throw new Error('bad world');
-  const w = newWorld(raw.seed, raw.mode);
+  if (!raw || raw.v !== 1 || raw.mode !== 'lines' || !Number.isInteger(raw.seed) || !Array.isArray(raw.items)) throw new Error('bad world');
+  const w = newWorld(raw.seed);
   const used = new Set(HUB);
   const okI = (i) => Number.isInteger(i) && i >= 0 && i < N * N && !used.has(i);
   const num = (o) => { const r = {}; for (const k in o || {}) if (G.ITEMS[k] && Number.isFinite(o[k]) && o[k] > 0) r[k] = o[k]; return r; };
   for (const it of raw.items) if (it && G.BUILDINGS[it.b] && okI(it.i)) {
-    used.add(it.i); const o = { b: it.b, i: it.i, off: !!it.off };
-    if (w.mode) { o.buf = num(it.buf); o.held = Number.isFinite(it.held) && it.held > 0 ? it.held : 0; }
-    w.items.push(o);
+    used.add(it.i);
+    w.items.push({ b: it.b, i: it.i, off: !!it.off, buf: num(it.buf), held: Number.isFinite(it.held) && it.held > 0 ? it.held : 0 });
   }
-  if (!w.mode) for (const i of raw.belts || []) if (okI(i)) { used.add(i); w.belts.push(i); }
   for (const i of raw.poles || []) if (okI(i)) { used.add(i); w.poles.push(i); }
-  if (w.mode) {
-    const at = new Set(w.items.map((it) => it.i)); const seen = new Set();
-    for (const l of raw.lines || []) if (l && at.has(l.a) && (at.has(l.b) || l.b === HUBT) && l.a !== l.b && !seen.has(l.a + ':' + l.b)) { seen.add(l.a + ':' + l.b); w.lines.push({ a: l.a, b: l.b }); }
-  }
+  const at = new Set(w.items.map((it) => it.i)); const seen = new Set();
+  for (const l of raw.lines || []) if (l && at.has(l.a) && (at.has(l.b) || l.b === HUBT) && l.a !== l.b && !seen.has(l.a + ':' + l.b)) { seen.add(l.a + ':' + l.b); w.lines.push({ a: l.a, b: l.b }); }
   return w;
+}
+// Machine counts of any saved world (belts or lines), or of the engine counts when there is none.
+export function countsOf(raw) {
+  const items = raw && raw.world && Array.isArray(raw.world.items) ? raw.world.items : null;
+  if (!items) return { ...((raw && raw.built) || {}) };
+  const c = {}; for (const it of items) if (it && G.BUILDINGS[it.b]) c[it.b] = (c[it.b] || 0) + 1;
+  return c;
 }
 
 const hide = (s, k, v) => Object.defineProperty(s, k, { value: v, enumerable: false, writable: true, configurable: true });
 export const derived = (s) => s._w;
 
-// Rebuild everything derived from the map: occupancy, the Hub network, power reach, counts.
+// Rebuild everything derived from the map: occupancy, power reach, lines in and out, counts.
 export function recompute(s) {
   const w = s.world; const grid = nodes(w.seed);
-  const occ = new Int32Array(N * N).fill(-1); // -1 free, -2 hub, -3 belt, -4 pole, >=0 item index
+  const occ = new Int32Array(N * N).fill(-1); // -1 free, -2 hub, -4 pole, >=0 item index
   for (const i of HUB) occ[i] = -2;
-  for (const i of w.belts) occ[i] = -3;
   for (const i of w.poles) occ[i] = -4;
   w.items.forEach((it, k) => { occ[it.i] = k; });
-  // the Hub network: belts and touching machines, flooded from the Hub
-  const conn = new Uint8Array(N * N); const hubDist = new Int32Array(N * N).fill(-1);
-  const q = [...HUB]; for (const i of HUB) { conn[i] = 1; hubDist[i] = 0; }
-  for (let h = 0; h < q.length; h++) {
-    const i = q[h];
-    for (const j of nb4(i)) if (!conn[j] && (occ[j] === -3 || occ[j] >= 0)) { conn[j] = 1; hubDist[j] = hubDist[i] + 1; q.push(j); }
-  }
-  // belt flow: each belt points at its neighbour nearest the Hub
-  const next = new Int32Array(N * N).fill(-1);
-  for (const i of w.belts) {
-    if (!conn[i]) continue;
-    let best = -1;
-    for (const j of nb4(i)) if (conn[j] && (occ[j] === -3 || occ[j] === -2) && hubDist[j] < hubDist[i] && (best < 0 || hubDist[j] < hubDist[best])) best = j;
-    if (best < 0) for (const j of nb4(i)) if (conn[j] && hubDist[j] < hubDist[i]) best = j;
-    next[i] = best;
-  }
-  // power: Hub, connected generators, then poles chained from anything live
+  // power: the Hub, every generator not stood by, then poles chained from anything live
   const sources = [{ i: C * N + C, r: REACH.hub, kind: 'hub' }];
-  w.items.forEach((it) => { if (G.BUILDINGS[it.b].gen && conn[it.i] && !it.off) sources.push({ i: it.i, r: REACH[it.b] || 4.5, kind: it.b }); });
+  w.items.forEach((it) => { if (G.BUILDINGS[it.b].gen && !it.off) sources.push({ i: it.i, r: REACH[it.b] || 4.5, kind: it.b }); });
   const live = new Set(); let grew = true;
   while (grew) {
     grew = false;
@@ -147,24 +133,22 @@ export function recompute(s) {
     for (let y = Math.max(0, sy - R); y <= Math.min(N - 1, sy + R); y++) for (let x = Math.max(0, sx - R); x <= Math.min(N - 1, sx + R); x++) if (Math.hypot(x - sx, y - sy) <= src.r) cov[y * N + x] = 1;
   }
   const placed = {}; for (const b in G.BUILDINGS) { placed[b] = 0; s.built[b] = 0; }
-  const lines = isLines(s); const outs = new Map(); const ins = new Map();
-  if (lines) for (const l of w.lines) { (outs.get(l.a) || outs.set(l.a, []).get(l.a)).push(l); (ins.get(l.b) || ins.set(l.b, []).get(l.b)).push(l); }
+  const outs = new Map(); const ins = new Map();
+  for (const l of w.lines) { (outs.get(l.a) || outs.set(l.a, []).get(l.a)).push(l); (ins.get(l.b) || ins.set(l.b, []).get(l.b)).push(l); }
   for (const it of w.items) {
     placed[it.b]++;
     const B = G.BUILDINGS[it.b];
-    if (lines) {
-      it.buf ||= {}; it.held ||= 0;
-      it.st = it.off ? 'off' : (B.power && !cov[it.i]) ? 'nopower' : 'on';
-      const from = new Set((ins.get(it.i) || []).map((l) => outItem(w.items[occ[l.a]].b)));
-      const miss = Object.keys(B.in).find((k) => !from.has(k));
-      it.need = miss ? 'noin:' + miss : (outItem(it.b) && !(outs.get(it.i) || []).length) ? 'noout' : '';
-    } else it.st = it.off ? 'off' : !conn[it.i] ? 'unlinked' : (B.power && !cov[it.i]) ? 'nopower' : 'on';
+    it.buf ||= {}; it.held ||= 0;
+    it.st = it.off ? 'off' : (B.power && !cov[it.i]) ? 'nopower' : 'on';
+    const from = new Set((ins.get(it.i) || []).map((l) => outItem(w.items[occ[l.a]].b)));
+    const miss = Object.keys(B.in).find((k) => !from.has(k));
+    it.need = miss ? 'noin:' + miss : (outItem(it.b) && !(outs.get(it.i) || []).length) ? 'noout' : '';
     if (it.st === 'on') s.built[it.b]++;
   }
   s.off = {};
   hide(s, 'placed', placed);
-  const order = lines ? w.items.filter((it) => !G.BUILDINGS[it.b].gen).sort((a, b) => G.BUILD_ORDER.indexOf(a.b) - G.BUILD_ORDER.indexOf(b.b)) : null;
-  hide(s, '_w', { grid, occ, conn, hubDist, next, cov, sources, live, R: revealR(s), outs, ins, order, gen: (s._w ? s._w.gen : 0) + 1, flow: lines ? flowTick : null });
+  const order = w.items.filter((it) => !G.BUILDINGS[it.b].gen).sort((a, b) => G.BUILD_ORDER.indexOf(a.b) - G.BUILD_ORDER.indexOf(b.b));
+  hide(s, '_w', { grid, occ, cov, sources, live, R: revealR(s), outs, ins, order, gen: (s._w ? s._w.gen : 0) + 1, flow: flowTick });
   return s._w;
 }
 
@@ -196,18 +180,10 @@ export function place(s, b, i) {
   const cost = b === 'pole' ? POLE.cost : G.buildingCost(s, b);
   if (!G.canAfford(s, cost)) return { ok: false, why: shortOf(s, cost) };
   pay(s, cost);
-  if (b === 'pole') s.world.poles.push(i); else s.world.items.push(isLines(s) ? { b, i, off: false, buf: {}, held: 0 } : { b, i, off: false });
+  if (b === 'pole') s.world.poles.push(i); else s.world.items.push({ b, i, off: false, buf: {}, held: 0 });
   recompute(s);
-  if (b !== 'pole' && isLines(s)) autoLink(s, i);
+  if (b !== 'pole') autoLink(s, i);
   return { ok: true };
-}
-
-// Lay belts on every free surveyed tile of a path. Belts are free.
-export function placeBelts(s, path) {
-  let n = 0;
-  for (const i of path) if (revealed(s, i) && s._w.occ[i] === -1 && !s._w.grid[i]) { s.world.belts.push(i); s._w.occ[i] = -3; n++; }
-  if (n) recompute(s);
-  return n;
 }
 
 export function refundOf(s, b) {
@@ -218,9 +194,8 @@ export function refundOf(s, b) {
 
 export function demolish(s, i) {
   const o = s._w.occ[i]; const w = s.world;
-  if (o === -3) w.belts.splice(w.belts.indexOf(i), 1);
-  else if (o === -4) w.poles.splice(w.poles.indexOf(i), 1);
-  else if (o >= 0) { const b = w.items[o].b; const back = refundOf(s, b); for (const k in back) s.stock[k] += back[k]; w.items.splice(o, 1); if (w.lines) w.lines = w.lines.filter((l) => l.a !== i && l.b !== i); }
+  if (o === -4) w.poles.splice(w.poles.indexOf(i), 1);
+  else if (o >= 0) { const b = w.items[o].b; const back = refundOf(s, b); for (const k in back) s.stock[k] += back[k]; w.items.splice(o, 1); w.lines = w.lines.filter((l) => l.a !== i && l.b !== i); }
   else return false;
   recompute(s);
   return true;
@@ -228,39 +203,25 @@ export function demolish(s, i) {
 
 export function setOff(s, i, off) { const o = s._w.occ[i]; if (o >= 0) { s.world.items[o].off = off; recompute(s); } }
 
-// ---------- auto layout: used by the balance bot, by ?demo= seeds and to lay out an old save ----------
-// Picks the cheapest valid tile for b: on the network and in power reach if possible, otherwise the
-// nearest one, then lays the belt and the poles that make it count. Returns the tile or -1.
+// ---------- auto layout: used by the balance bot, by ?demo= seeds and to lay out an older save ----------
+// Picks a tile for b near the producers of its first input and in power reach if it can, places
+// it, links it (autoLink) and chains poles to it. Returns the tile or -1.
 export function autoPlace(s, b, { free = false } = {}) {
-  if (isLines(s)) return autoPlaceLines(s, b, free);
-  const d = s._w; const R = revealR(s);
-  // distance from the network over free, node-less, surveyed tiles
-  const dnet = new Int32Array(N * N).fill(-1); const pred = new Int32Array(N * N).fill(-1); const q = [];
-  for (let i = 0; i < N * N; i++) if (d.conn[i]) { dnet[i] = 0; q.push(i); }
-  for (let h = 0; h < q.length; h++) {
-    const i = q[h];
-    for (const j of nb4(i)) if (dnet[j] < 0 && d.occ[j] === -1 && !d.grid[j] && dist(j) <= R) { dnet[j] = dnet[i] + 1; pred[j] = i; q.push(j); }
-  }
-  const B = G.BUILDINGS[b];
-  let best = -1; let bestScore = Infinity; let via = -1;
+  const d = s._w; const B = G.BUILDINGS[b]; const w = s.world;
+  const firstIn = Object.keys(B.in)[0];
+  const src = firstIn ? w.items.filter((p) => outItem(p.b) === firstIn).sort((p, q) => dist(p.i) - dist(q.i)) : [];
+  const anchor = src.length ? src[Math.min(src.length - 1, (w.items.filter((x) => x.b === b).length) % Math.max(1, Math.min(4, src.length)))].i : HUBT;
+  let best = -1; let bs = Infinity;
   for (let i = 0; i < N * N; i++) {
     if (whyNot(s, b, i)) continue;
-    let link = Infinity; let from = -1;
-    for (const j of nb4(i)) if (dnet[j] >= 0 && dnet[j] < link) { link = dnet[j]; from = j; }
-    if (from < 0) continue;
-    let score = link * 2;
-    if (B.power && !d.cov[i]) score += 6 + 3 * Math.min(...d.sources.map((src) => Math.max(0, dij(src.i, i) - src.r)));
-    if (B.gen) score += d.cov[i] ? 3 : 0; // generators push the grid outward
-    score += dist(i) * 0.05;
-    if (score < bestScore) { bestScore = score; best = i; via = from; }
+    let sc = dij(i, anchor) + dist(i) * 0.3;
+    if (B.power && !d.cov[i]) sc += 6 + 3 * Math.min(...d.sources.map((x) => Math.max(0, dij(x.i, i) - x.r)));
+    if (sc < bs) { bs = sc; best = i; }
   }
   if (best < 0) return -1;
   if (!free) pay(s, G.buildingCost(s, b));
-  s.world.items.push({ b, i: best, off: false });
-  const path = [];
-  for (let j = via; j >= 0 && dnet[j] > 0; j = pred[j]) path.push(j);
-  for (const j of path) s.world.belts.push(j);
-  recompute(s);
+  w.items.push({ b, i: best, off: false, buf: {}, held: 0 });
+  recompute(s); autoLink(s, best);
   if (B.power && !s._w.cov[best]) powerTo(s, best, free);
   return best;
 }
@@ -283,15 +244,15 @@ function powerTo(s, target, free) {
   }
 }
 
-// Build b the way the bot does: afford, auto-place. Mirrors G.build for the builder.
+// Build b the way the bot does: afford, auto-place. Mirrors G.build for the map.
 export function autoBuild(s, b) {
   if (!G.isBuildingUnlocked(s, b) || !G.canAfford(s, G.buildingCost(s, b))) return false;
   return autoPlace(s, b) >= 0;
 }
 
-// Lay out counts (from an old list-mode save or a demo seed) on a fresh map, free of charge.
-export function layOut(s, counts, seed, mode = '') {
-  s.world = newWorld(seed, mode); recompute(s);
+// Lay out counts (from an older save or a demo seed) on a fresh map with lines, free of charge.
+export function layOut(s, counts, seed) {
+  s.world = newWorld(seed); recompute(s);
   const order = G.BUILD_ORDER.filter((b) => counts[b]);
   let left = true;
   while (left) {
@@ -301,12 +262,12 @@ export function layOut(s, counts, seed, mode = '') {
   return s;
 }
 
-// Power any placed machine left outside reach (the bot calls this each check; poles cost ingot).
+// Power any placed machine left outside reach (the bot calls this each check; poles are free).
 export function repair(s) {
   for (const it of s.world.items) if (it.st === 'nopower') powerTo(s, it.i, false);
 }
 
-// ---------- supply lines (piece 4, #19364885; docs/design.md "Supply lines") ----------
+// ---------- supply lines (piece 4, #19364885; the game since #19364887; docs/design.md) ----------
 export const HUBT = C * N + C;
 export const BUF = 6; // input buffer, in cycles of the recipe
 export const HOLD = 4; // output a producer can hold when nothing takes it, in cycles
@@ -451,26 +412,7 @@ function send(s, it, k, dt) {
   it.held = left;
 }
 
-// ---------- the bot and auto layout, lines mode ----------
-function autoPlaceLines(s, b, free) {
-  const d = s._w; const B = G.BUILDINGS[b]; const w = s.world;
-  const firstIn = Object.keys(B.in)[0];
-  const src = firstIn ? w.items.filter((p) => outItem(p.b) === firstIn).sort((p, q) => dist(p.i) - dist(q.i)) : [];
-  const anchor = src.length ? src[Math.min(src.length - 1, (w.items.filter((x) => x.b === b).length) % Math.max(1, Math.min(4, src.length)))].i : HUBT;
-  let best = -1; let bs = Infinity;
-  for (let i = 0; i < N * N; i++) {
-    if (whyNot(s, b, i)) continue;
-    let sc = dij(i, anchor) + dist(i) * 0.3;
-    if (B.power && !d.cov[i]) sc += 6 + 3 * Math.min(...d.sources.map((x) => Math.max(0, dij(x.i, i) - x.r)));
-    if (sc < bs) { bs = sc; best = i; }
-  }
-  if (best < 0) return -1;
-  if (!free) pay(s, G.buildingCost(s, b));
-  w.items.push({ b, i: best, off: false, buf: {}, held: 0 });
-  recompute(s); autoLink(s, best);
-  if (B.power && !s._w.cov[best]) powerTo(s, best, free);
-  return best;
-}
+// ---------- advice and the bot ----------
 // The one line that would help most, or null: a machine with no line out goes to the Hub, a
 // machine missing an input or short of one for a while gets the producer of it with the fewest
 // lines out, a backed-up producer gets the Hub. Advice offers it; the bot lays it.
@@ -495,7 +437,7 @@ export function suggestLink(s) {
   }
   return best;
 }
-// What the bot does each check in lines mode: the suggested link, up to max times.
+// What the bot does each check: the suggested link, up to max times.
 export function tendLines(s, max = 1) {
   let n = 0;
   for (; n < max; n++) { const l = suggestLink(s); if (!l) break; s.world.lines.push({ a: l.a, b: l.b }); recompute(s); }

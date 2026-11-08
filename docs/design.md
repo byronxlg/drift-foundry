@@ -80,24 +80,28 @@ The UI system (roles, items, glyph language, type, space, components, direction 
 Byron, 2026-11-08, on directions A and B: "I want it to look like a full screen app no scrolling.
 I want it to be more builder like. Satisfactory kind of thing." It was a preview at `?ui=build`
 until he picked design system direction B for it (#19364880); it is now the only screen, `?ui=`,
-`?ds=` and `?skin=` are ignored, and it keeps its own save key (`drift-foundry/build`).
+`?ds=` and `?skin=` are ignored. Since 2026-11-08 (#19364887) items move along supply lines, not
+belts: the belt rules, belt patterns and belt rows below are struck through or rewritten, and the
+"Supply lines" section is the logistics design. The save key is `drift-foundry/lines`; the belt
+builder's `drift-foundry/build` is read once and laid out again with lines.
 
 ### Idea
 
 The rock is the screen. A top-down map of the drifting rock fills the viewport; the Hub (the
 lander) sits in the middle holding the shared stock, resource nodes lie in patches around it, and
-everything you build is a tile on that map, joined to the Hub by belts you draw. The ring is the
+everything you build is a tile on that map, joined machine to machine and to the Hub by supply
+lines (belts you drew tile by tile until 2026-11-08). The ring is the
 goal and lives in the HUD; the factory is what you look at.
 
 ### Rules of the map
 
 - Extractors go only on a matching node (ore, coal, stone, quartz). Other machines go on bare rock.
-- A machine counts when it is on the Hub network: a belt path to the Hub, or touching a machine or
-  belt that is. Touching machines hand items along, so a block of drills needs one belt, not one each.
+- ~~A machine counts when it is on the Hub network: a belt path to the Hub.~~ Replaced by supply
+  lines (below): a machine runs when it is in power reach and gets its inputs along lines.
 - Power reach: the Hub covers 7 tiles, a burner 4, a turbine 6, a solar field 5, a power pole 5
   (free, chains from anything live). A machine that draws power and sits outside reach does not run.
-- The engine is unchanged: the counts it ticks are the connected, powered, running machines; costs
-  grow with what is placed. Demolish refunds half.
+- Costs grow with what is placed. Demolish refunds half. Any generator not stood by extends
+  reach (with belts it had to be on the network).
 - The rock opens as segments close: survey radius 9, 14, 20, 26, 31 tiles. Coal appears with the
   Spine, stone with the Lattice, quartz with the Nerve; each ring has fresh ore.
 
@@ -109,8 +113,8 @@ goal and lives in the HUD; the factory is what you look at.
 | --- | --- |
 | First open | The Hub on an ore field; advice "Tap an ore node to dig; 10 ore buys a drill" |
 | Placing | Valid tiles lit on the map; the chosen card in the build bar |
-| Factory running | Items moving along belts into the Hub; segment bar in the HUD |
-| Disconnected / no power | The machine itself: dashed red outline, or dark with a bolt; advice names the fix |
+| Factory running | Items moving along supply lines; segment bar in the HUD |
+| No line out / no power | The machine itself: dashed red outline, or dark with a bolt; advice names the fix |
 | Inspect | The tile ringed; drawer with status, rate, stand by, demolish |
 | Map grows | Sheet names what was surveyed; camera eases out to show the new ring |
 
@@ -120,12 +124,12 @@ goal and lives in the HUD; the factory is what you look at.
    tool to place again. Changes the bottom bar into a hotbar and the map into the placement surface.
 2. Satisfactory resource nodes: extractors only on nodes, nodes visible as coloured patches with
    their item. Changes where drills can go and makes exploring the rock matter.
-3. Factorio belt drag: draw belts by dragging tile to tile; items ride them visibly. Changes the
-   factory from numbers into motion along the map.
+3. ~~Factorio belt drag~~ (removed 2026-11-08): now Mini Metro line drawing, see Supply lines.
+   Items still ride visibly, along lines.
 4. Factorio power pole reach and the "no power" icon: coverage drawn as a tint while placing; a
    machine out of reach shows a bolt. Changes power from one meter into a spatial constraint.
 5. Mindustry core: one central core holds all items and everything delivers into it. Keeps the
-   engine's global stock pool and makes "connected to the Hub" the only logistics rule.
+   engine's global stock pool; with supply lines the Hub is a sink only.
 6. Mini Motorways map growth: the playable area expands in steps; the next ring is drawn faint so
    there is always somewhere to build out to.
 7. shapez hub goal: the central hub shows the current goal and its progress. Changes the Hub into
@@ -148,8 +152,7 @@ Panels are `#1b2127` at 94% over the map, radius 10, no shadows except sheets.
 | Placing | Tap a lit tile, change card, cancel (X or tap card again) | Placed: stays in the tool for the next one |
 | Invalid tile | Tap shows the reason on the tile and in the hint line | Lit tiles stay lit; pick one of them |
 | Cannot afford | Card shows short cost in red; tap says "Short of ingot" | Wait (rates in HUD), stand by consumers |
-| Belt drawing | Drag tile to tile; lift to lay; pan with two fingers or right-drag | Belt joins the network, machine turns live |
-| Disconnected | Red dashed outline; inspect says "No belt to the Hub" | Advice "N machines are not on a belt" opens the belt tool there |
+| Line drawing | See the Supply lines state map | |
 | No power | Dark machine with bolt; inspect says "Outside power reach" | Advice opens the pole tool; reach tint shows where |
 | Power short | Power meter red; machines run slower | Advice names the generator |
 | Starved | Amber dot; inspect names the short input | Advice walks upstream to the build |
@@ -158,23 +161,23 @@ Panels are `#1b2127` at 94% over the map, radius 10, no shadows except sheets.
 | Deliver | HUD Deliver button | Segment closes, sheet, map grows |
 | Map grows | Sheet lists new nodes and buildings | Camera shows the new ring |
 | Away / reload | Autosave 5 s and on hide | Catch-up, away sheet over a minute |
-| Old list save | Imported once, laid out on the map automatically | Sheet says so; play on |
+| Old list save | Imported once, laid out on the map with lines automatically | Sheet says so; play on |
 | Corrupt save | Kept under a backup key | Fresh rock, sheet explains |
 | Ring complete | Sheet with totals | New game from the menu |
 
 ### Pacing
 
-`sim/balance.mjs` now plays the builder by default: it places each building on the best tile (on
-a node for extractors), lays the belt to the network and chains poles to reach. 2026-11-08: 6h 14m
-at 15 s checks, 5h 18m to 6h 31m across 15-45 s, same on five map seeds; 293 machines, about 75 belt
-tiles. `--abstract` runs the old count-only model.
+Belt figures, kept for history: 2026-11-08, 6h 14m at 15 s checks, 5h 18m to 6h 31m across
+15-45 s; 293 machines, about 75 belt tiles. Current numbers are under Supply lines, Pacing.
 
 ## Supply lines (piece 4, belts as a mechanic)
 
 Byron picked C on the belts sheet (#19364885, 2026-11-08): items really move machine to machine,
 so ratios and placement matter, but a link is one drag from one machine to another and the line
-routes itself. It replaces the tether to the Hub. Preview at `?flow=lines` (own save key,
-`drift-foundry/lines`) until he says yes; then it becomes the game and belts go.
+routes itself. It replaces the tether to the Hub. It was a preview at `?flow=lines` (own save
+key, `drift-foundry/lines`); Byron played it and said yes (#19364887, 2026-11-08: it feels better
+than the normal game), so it is the game: belts and the belt tool are gone, `?flow=` is ignored,
+and the same save key carries preview progress on.
 
 ### Rules
 
@@ -229,7 +232,10 @@ routes itself. It replaces the tether to the Hub. Preview at `?flow=lines` (own 
 | Demolish a machine | Its lines go with it, buffers lost, half refund | Neighbours re-split |
 | Place a machine across a line | Allowed; the line re-routes, or is drawn straight if boxed in; never dropped | No state change |
 | Reload / away | Buffers and held output are saved; catch-up runs the flow | Away sheet as before |
-| First open of the preview with a builder save | Laid out again with lines, free, the builder save untouched | Sheet says so |
+| First open with a belt builder save (no lines save, or the belt save is newer) | Laid out again with lines, free; the belt save is never written; a lines save it displaces is kept under `drift-foundry/lines.before-belts.*` | Sheet "Your foundry, with supply lines" |
+| First open with a lines preview save | Loads as it was: same machines, same lines | Away sheet if over a minute |
+| First open with a list-screens save only | Laid out with lines, free | Same sheet |
+| Reload after any of the above | The lines save is the newest, nothing is laid out again | Play on |
 
 Review before build (2026-11-08, independent agent) folded in: Hub as overflow not a share,
 auto-link on placing, coal drills ride out brownouts, fuel-line and Hub-income rows, boxed-in
@@ -238,7 +244,14 @@ away sheet.
 
 ### Pacing
 
-2026-11-08: 6h 18m to 7h 42m across 15-45 s checks and seeds 7, 11, 23 (belts: 6h 14m); about 4 lines per machine, most laid by auto-link. Retune toward 6 h after the yes.
+2026-11-08, preview: 6h 18m to 7h 42m across 15-45 s checks and seeds 7, 11, 23 (median 6h 51m).
+
+2026-11-08, retuned after the yes: Engine needs cut by about 17% (motor 9000 to 7500, circuit
+15000 to 12500, concrete 80000 to 66000), and every generator not stood by extends power reach
+(before, only one touching the Hub's machine cluster did). `node sim/balance.mjs 15` on seed 7:
+6h 7m (Anchor 4m, Spine 20m, Lattice 1h 3m, Nerve 1h 46m, Engine 6h 7m). Across 15-45 s checks and
+seeds 7, 11, 23: 5h 32m to 7h 4m, median 6h 6m. `--abstract` (count-only): 5h 51m. About 4 lines
+per machine, most laid by auto-link. CI gates seeds 7, 11 and 23 at 15 s and the count-only model.
 
 The bot places like a person (the same auto-link), then lays lines the way a careful person would: each new maker draws from the nearest producers
 of each input until their shares cover its want, each new producer links to the Hub (coal to a

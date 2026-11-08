@@ -7,12 +7,12 @@ const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const period = Number(args[0] || 15);
 const taps = Number(args[1] || 3);
 const s = G.newState(0);
-// Default: the bot plays the builder (places on nodes, lays belts and poles). --abstract: counts only.
+// Default: the bot plays the map with supply lines (places on nodes, links machines, chains poles).
+// --abstract: the count-only engine model. --lines is accepted and ignored (lines are the game).
 const spatial = !process.argv.includes('--abstract');
 const seed = Number((process.argv.find((a) => a.startsWith('--seed=')) || '--seed=7').slice(7));
-// --lines: supply lines (piece 4) instead of belts to the Hub
-const lines = process.argv.includes('--lines');
-if (spatial) { s.world = W.newWorld(seed, lines ? 'lines' : ''); W.recompute(s); }
+const lines = spatial;
+if (spatial) { s.world = W.newWorld(seed); W.recompute(s); }
 const build = (b) => (spatial ? W.autoBuild(s, b) : G.build(s, b));
 const producerOf = {};
 for (const b of G.BUILD_ORDER) for (const k of Object.keys(G.BUILDINGS[b].out)) producerOf[k] ??= b;
@@ -100,6 +100,6 @@ for (const m of marks) {
 }
 if (spatial && process.env.DEBUG) console.log(JSON.stringify(s.world.items.filter((it) => it.st !== "on").map((it) => [it.b, it.st, Math.round(W.dist(it.i))])), JSON.stringify(s.placed), JSON.stringify(s.built), JSON.stringify(Object.fromEntries(Object.entries(s.stock).map(([k,v])=>[k,Math.round(v)]))));
 if (lines) console.log(`lines: ${s.world.lines.length}, to the Hub ${s.world.lines.filter((l) => l.b === W.HUBT).length}`);
-if (spatial) console.log(`map: ${s.world.items.length} machines, ${s.world.belts.length} belt tiles, ${s.world.poles.length} poles, ${s.world.items.filter((it) => it.st !== 'on').length} not counting`);
+if (spatial) console.log(`map: ${s.world.items.length} machines, ${s.world.poles.length} poles, ${s.world.items.filter((it) => it.st !== 'on').length} not counting`);
 console.log(s.done ? `finished in ${G.fmtTime(s.done)}, ${builds} builds` : `not finished after ${G.fmtTime(s.playSeconds)}; phase ${s.phase} remaining ${JSON.stringify(G.remaining(s))}`);
 if (process.env.DEBUG) console.log(JSON.stringify({ built: s.built, stock: Object.fromEntries(Object.entries(s.stock).map(([k, v]) => [k, Math.round(v)])), util: s.stats.util, sup: s.stats.supply, dem: s.stats.demand, reserve }, null, 0));
