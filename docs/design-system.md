@@ -112,20 +112,27 @@ never confused with stone's chunk).
 
 ## Map glyph language
 
-- Building = family silhouette in `machine`, the output token in the light item tone on top.
-  Generators carry a bolt in `power`. Hub: 3x3, accent keyline, the five-segment ring inside.
-- Families: extractor (circle with a bit that turns when running), furnace (square with a
-  chimney notch top-right; the output token brightens when running, no glow), maker (square with
-  one feed pip on the left per input, and a cycle bar), generator (hexagon: burner a flame,
-  turbine a turning rotor), solar (cell grid). Same-family machines differ by their output token
-  (shape and colour) and, for makers, by pip count; the inspect drawer names it on tap.
+- Building = a silhouette per machine in `machine`, its recipe inside in the light item tone.
+  Piece 2, Byron's pick B plus C (2026-11-08, #19364882): the family is the base shape, each
+  sibling adds its own outline detail, and the building reads as input to output without a tap.
+  Hub: 3x3, accent keyline, the five-segment ring inside.
+- Families and siblings: extractor (circle with teeth: coal drill 2, ore drill 3, quarry 4, quartz
+  drill 6; a bit turns when running; output token in the middle), furnace (square body with its
+  own roof: smelter one chimney top-right, kiln a dome, refinery twin stacks), maker (square with
+  a row of roof vents by tier: press 1, wire drawer 2, assembler 3, fabricator 4, motor works 5;
+  cycle bar under the output), generator (hexagon: burner a flame, turbine a turning rotor; coal
+  token bottom-left), solar (cell grid).
+- Recipe on furnaces and makers: output token large right of centre (48% of the body), each input
+  as a small token down the left edge, an arrow in the output tone between. A furnace's recipe is
+  at 75% strength when idle and full when running. Under 20 px inputs, arrow and vents drop and
+  only the silhouette and output show.
 - Status marks only when not running well, each with its own shape so colour is not the only
   cue: starved = `warn` triangle notch top-right; power short = nothing per machine (the HUD says
   it once); no power = `bad` round badge with a bolt; not on a belt = `bad` broken outline (a
   game status, not a design guide); stood by = `machineOff` body with an `ink2` pause badge, no
   motion. No green dots.
 - Level of detail by tile size: under 20 px body, token and status marks only; 20 px and up adds
-  motion, pips and cycle bars; 40 px and up adds the machine name under the Hub ring and on
+  motion, recipe inputs, vents and cycle bars; 40 px and up adds the machine name under the Hub ring and on
   selected tiles. Status marks are drawn at every size. Zoom range 16 to 64 px per tile.
 - Tiles: no seams, no grid lines. With a tool in hand, tiles where the machine would run at once fill
   with `accentSoft` and a centre dot; tiles that are valid but need a belt or pole get a faint dot only; invalid tiles stay plain and a tap names

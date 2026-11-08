@@ -630,26 +630,38 @@ function drawItem(g, k, x, y, size, alpha = 1, on = false) {
   g.restore();
 }
 function hexPath(g, cx, cy, r) { g.beginPath(); for (let a = 0; a < 6; a++) { const t = (a / 6) * Math.PI * 2 + Math.PI / 6; g[a ? 'lineTo' : 'moveTo'](cx + r * Math.cos(t), cy + r * Math.sin(t)); } g.closePath(); }
+// Piece 2 (machines, #19364882): a silhouette per machine with its recipe inside. Siblings differ
+// by outline (drill teeth, furnace roof, maker vents by tier); the output token sits large on the
+// right, each input small down the left edge with an arrow between. Under 20 px only the output.
+const TEETH = { drill: 3, coaldrill: 2, quarry: 4, quartzdrill: 6 };
+const VENTS = { press: 1, drawer: 2, assembler: 3, fabricator: 4, motorworks: 5 };
 function drawMachine(g, b, sx, sy, z, o = {}) {
   const B = G.BUILDINGS[b]; const k = KIND[b] || 'm'; const out = outOf(b);
   const m = z * 0.07; const w = z - 2 * m; const x = sx + m; const y = sy + m; const cx = sx + z / 2; const cy = sy + z / 2;
   const off = o.off; const t = o.t || 0; const run = o.running; const lod = z >= 20;
   const body = off ? TH.machineOff : TH.machine; const rad = Math.min(z * 0.2, TH.rc * z / 28);
+  const ins = Object.keys(B.in || {});
   g.fillStyle = body; g.strokeStyle = TH.machineEdge; g.lineWidth = Math.max(1, z * 0.04);
-  if (k === 'x') { g.beginPath(); g.arc(cx, cy, w / 2, 0, Math.PI * 2); g.fill(); }
-  else if (k === 'g') { hexPath(g, cx, cy, w / 2); g.fill(); }
-  else if (k === 'f') { // body with a chimney notch top-right
+  if (k === 'x') { // circle with teeth: 2 coal, 3 ore, 4 stone, 6 quartz
+    const n = TEETH[b] || 3; g.beginPath();
+    for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2 - Math.PI / 2; g.moveTo(cx, cy); g.arc(cx, cy, w * 0.5, a - 0.28, a + 0.28); g.closePath(); }
+    g.fill(); g.beginPath(); g.arc(cx, cy, w * 0.4, 0, Math.PI * 2); g.fill();
+  } else if (k === 'g') { hexPath(g, cx, cy, w / 2); g.fill(); }
+  else if (k === 'f') { // body with its own roof: smelter one chimney, kiln a dome, refinery twin stacks
     g.beginPath(); g.roundRect(x, y + w * 0.14, w, w * 0.86, rad); g.fill();
-    g.fillRect(x + w * 0.66, y, w * 0.22, w * 0.3);
+    if (b === 'kiln') { g.beginPath(); g.arc(cx, y + w * 0.2, w * 0.22, Math.PI, 0); g.fill(); }
+    else if (b === 'refinery') { g.fillRect(x + w * 0.14, y, w * 0.18, w * 0.3); g.fillRect(x + w * 0.68, y, w * 0.18, w * 0.3); }
+    else g.fillRect(x + w * 0.66, y, w * 0.22, w * 0.3);
   } else { g.beginPath(); g.roundRect(x, y, w, w, rad); g.fill(); }
   if (!TH.dark) { g.stroke(); }
-  const tok = (sz, a = 1) => drawItem(g, out, cx - sz / 2, cy - sz / 2 + (k === 'f' ? w * 0.07 : 0), sz, a, true);
+  if (k === 'm' && lod) { g.fillStyle = TH.machineEdge; for (let i = 0; i < (VENTS[b] || 1); i++) g.fillRect(x + w * (0.2 + i * 0.13), y + w * 0.03, w * 0.07, w * 0.09); }
+  const dy = k === 'f' ? w * 0.07 : 0;
+  const recipe = lod && ins.length && k !== 'x';
   if (k === 'x') { // drill bit turns when running, token in the middle
     if (lod) { g.save(); g.translate(cx, cy); g.rotate(t * 2.5); g.fillStyle = TH.dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.28)';
-      for (let a = 0; a < 3; a++) { g.rotate((Math.PI * 2) / 3); g.beginPath(); g.moveTo(w * 0.2, -w * 0.08); g.lineTo(w * 0.46, 0); g.lineTo(w * 0.2, w * 0.08); g.fill(); } g.restore(); }
-    tok(w * 0.5);
-  } else if (k === 'f') tok(w * 0.5, off ? 0.5 : run || !lod ? 1 : 0.6);
-  else if (k === 'g') {
+      for (let a = 0; a < 3; a++) { g.rotate((Math.PI * 2) / 3); g.beginPath(); g.moveTo(w * 0.2, -w * 0.08); g.lineTo(w * 0.36, 0); g.lineTo(w * 0.2, w * 0.08); g.fill(); } g.restore(); }
+    const ts = w * 0.46; drawItem(g, out, cx - ts / 2, cy - ts / 2, ts, 1, true);
+  } else if (k === 'g') {
     g.save(); g.translate(cx, cy);
     if (b === 'turbine') { g.rotate(t * 3); g.fillStyle = TH.power; for (let a = 0; a < 3; a++) { g.rotate((Math.PI * 2) / 3); g.beginPath(); g.ellipse(0, -w * 0.18, w * 0.08, w * 0.17, 0, 0, Math.PI * 2); g.fill(); } g.beginPath(); g.arc(0, 0, w * 0.06, 0, Math.PI * 2); g.fill(); }
     else { const f = run && lod ? 1 + 0.06 * Math.sin(t * 9) : 1; g.scale(f, f); g.fillStyle = off ? TH.ink2 : TH.power; // flame: two tongues
@@ -658,13 +670,18 @@ function drawMachine(g, b, sx, sy, z, o = {}) {
       g.quadraticCurveTo(-w * 0.26, -w * 0.12, -w * 0.04, -w * 0.34); g.fill();
       g.fillStyle = off ? TH.machineOff : TH.machine; g.beginPath(); g.ellipse(0, w * 0.14, w * 0.08, w * 0.11, 0, 0, Math.PI * 2); g.fill(); }
     g.restore();
+    if (recipe) drawItem(g, 'coal', x + w * 0.1, y + w * 0.56, w * 0.26, off ? 0.5 : 1, true);
   } else if (k === 's') {
     g.fillStyle = TH.power; const c = w * 0.3; for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) g.fillRect(x + w * 0.16 + i * (c + w * 0.08), y + w * 0.16 + j * (c + w * 0.08), c, c);
-  } else { // maker: input pips on the left, token, cycle bar
-    const ins = Object.keys(B.in).length; tok(w * 0.46);
-    if (lod) { g.fillStyle = TH.dark ? TH.ink2 : '#ffffff'; for (let i = 0; i < ins; i++) g.fillRect(x + w * 0.05, y + w * (0.2 + i * 0.2), w * 0.08, w * 0.12);
-      if (run) { g.fillStyle = COL_ON[out]; g.fillRect(x + w * 0.18, y + w * 0.84, w * 0.64 * ((t / B.time) % 1), w * 0.07); } }
-  }
+  } else if (recipe) { // furnace and maker: inputs down the left, arrow, output large on the right
+    const a = off ? 0.5 : k === 'f' && !run ? 0.75 : 1;
+    const ts = w * 0.48; drawItem(g, out, x + w * 0.44, cy - ts / 2 + dy, ts, a, true);
+    const top = y + w * 0.14 + dy; const span = w * (k === 'f' ? 0.66 : 0.68); const n = ins.length; const s1 = Math.min(w * 0.26, span / n);
+    ins.forEach((it, i) => drawItem(g, it, x + w * 0.07, top + (i * span) / n + (span / n - s1) / 2, s1, a, true));
+    g.globalAlpha *= a; g.fillStyle = COL_ON[out]; g.beginPath(); const ax = x + w * 0.36; const ay = cy + dy;
+    g.moveTo(ax, ay - w * 0.06); g.lineTo(ax + w * 0.06, ay); g.lineTo(ax, ay + w * 0.06); g.fill(); g.globalAlpha /= a || 1;
+    if (k === 'm' && run) { g.fillStyle = COL_ON[out]; g.fillRect(x + w * 0.44, y + w * 0.86, w * 0.48 * ((t / B.time) % 1), w * 0.06); }
+  } else { const ts = w * 0.5; drawItem(g, out, cx - ts / 2, cy - ts / 2 + dy, ts, off ? 0.5 : 1, true); }
 }
 const iconCache = {};
 function iconURL(b) {
