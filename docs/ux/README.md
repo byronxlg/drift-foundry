@@ -295,3 +295,15 @@ and time to full.
 The choice Deliver was meant to be moves into the layout: a machine's line goes to the Dock (ring)
 or to the Hub (building), and from Spine the splitter shares it. Hub stock is for building and
 Research only. Saves with stock in the Hub keep it for building.
+
+### From the top
+
+Byron, 2026-11-09 (#19364910), on bot msg 1584: "you're gonna need to explain it from the top. I
+don't understand what any of those components are or how they work." So the pieces are named on a
+real shot (`?demo=2`) before the Dock is asked about again.
+
+![From the top](2b-explain.png)
+
+Made by `2b-explain.html` and `2b-explain-shot.cjs`. The question stays the one from bot msg 1582,
+in plain words: lines into a Dock decide what goes to the ring (pick), or the ring takes from the
+Hub by itself, or keep the button.

@@ -1,0 +1,75 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Drift Foundry from the top</title>
+<style>
+  body { margin: 0; background: #f4f4f1; font: 15px/1.35 -apple-system, system-ui, sans-serif; color: #1b1f24; }
+  .wrap { display: flex; gap: 28px; padding: 24px; width: max-content; }
+  .col h2 { margin: 0 0 10px; font-size: 20px; }
+  .shot { position: relative; width: 390px; }
+  .shot img { width: 390px; display: block; border-radius: 14px; box-shadow: 0 1px 4px #0003; }
+  .n { position: absolute; width: 26px; height: 26px; border-radius: 13px; background: #e8590c; color: #fff;
+       font-weight: 800; font-size: 15px; display: grid; place-items: center; box-shadow: 0 0 0 3px #fff; }
+  .box { position: absolute; border: 3px solid #e8590c; border-radius: 8px; }
+  .key { width: 330px; }
+  .key ol { margin: 0; padding: 0; list-style: none; }
+  .key li { display: flex; gap: 10px; margin-bottom: 11px; }
+  .key li b.d { flex: none; width: 26px; height: 26px; border-radius: 13px; background: #e8590c; color: #fff;
+       display: grid; place-items: center; font-size: 15px; }
+  .key li b.kd { background: #2347d9; }
+  .cover { position: absolute; background: #fff; }
+  .dock { position: absolute; border: 3px dashed #2347d9; background: #2347d933; border-radius: 6px;
+       color: #2347d9; font-weight: 800; display: grid; place-items: center; font-size: 15px; }
+  .rule { margin-top: 14px; padding: 12px; background: #fff; border-radius: 10px; }
+</style>
+<div class="wrap">
+  <div class="col">
+    <h2>The game today</h2>
+    <div class="shot">
+      <img src="2-a2.png">
+      <div class="box" style="left:6px;top:4px;width:378px;height:112px"></div><div class="n" style="left:-8px;top:-8px">1</div>
+      <div class="box" style="left:283px;top:119px;width:98px;height:54px"></div><div class="n" style="left:368px;top:108px">9</div>
+      <div class="n" style="left:58px;top:182px">2</div>
+      <div class="box" style="left:101px;top:207px;width:30px;height:30px;border-radius:15px"></div><div class="n" style="left:86px;top:226px">3</div>
+      <div class="box" style="left:154px;top:183px;width:30px;height:30px"></div><div class="n" style="left:176px;top:166px">4</div>
+      <div class="box" style="left:236px;top:340px;width:20px;height:60px"></div><div class="n" style="left:254px;top:380px">5</div>
+      <div class="box" style="left:156px;top:289px;width:78px;height:78px"></div><div class="n" style="left:214px;top:276px">6</div>
+      <div class="box" style="left:4px;top:518px;width:382px;height:26px"></div><div class="n" style="left:-8px;top:506px">7</div>
+      <div class="box" style="left:6px;top:548px;width:378px;height:112px"></div><div class="n" style="left:-8px;top:592px">8</div>
+    </div>
+  </div>
+  <div class="key">
+    <h2>What each piece is</h2>
+    <ol>
+      <li><b class="d">1</b><span><b>The ring.</b> The goal. It is built in five parts; each part asks for a pile of things (here ingots, plates, wire). Finish all five and the game ends.</span></li>
+      <li><b class="d">2</b><span><b>The rock.</b> The map you build on. Pink patches are ore in the ground.</span></li>
+      <li><b class="d">3</b><span><b>Drill.</b> Sits on ore and digs it out.</span></li>
+      <li><b class="d">4</b><span><b>Smelter.</b> One of the machines: takes one thing, makes another (ore in, ingot out).</span></li>
+      <li><b class="d">5</b><span><b>Line.</b> A grey track you draw. It carries what one machine makes to the next machine.</span></li>
+      <li><b class="d">6</b><span><b>Hub.</b> The big store. Lines end there and whatever arrives is kept.</span></li>
+      <li><b class="d">7</b><span><b>Hub stock.</b> What the Hub holds now.</span></li>
+      <li><b class="d">8</b><span><b>Build cards.</b> New machines. Paid for from Hub stock.</span></li>
+      <li><b class="d">9</b><span><b>Deliver.</b> Moves stock from the Hub into the ring. The same stock pays for machines, so today you choose by pressing it.</span></li>
+    </ol>
+  </div>
+  <div class="col">
+    <h2>With the Dock</h2>
+    <div class="shot">
+      <img src="2-a2.png">
+      <div class="cover" style="left:284px;top:120px;width:96px;height:52px"></div>
+      <div class="dock" style="left:68px;top:318px;width:76px;height:76px">Dock</div>
+      <div class="n" style="left:56px;top:306px;background:#2347d9">D</div>
+    </div>
+  </div>
+  <div class="key">
+    <h2>The Dock</h2>
+    <ol>
+      <li><b class="d kd">D</b><span><b>Dock.</b> A second store, fixed beside the Hub from the start. Lines can end on it, the same as on the Hub.</span></li>
+    </ol>
+    <div class="rule">
+      What reaches the <b>Dock</b> goes into the ring.<br>
+      What reaches the <b>Hub</b> is kept for building.<br><br>
+      If the ring already has enough of that thing, the extra goes on to the Hub, so nothing is wasted.<br><br>
+      The Deliver button goes. You choose by where you point a line, not by pressing a button.
+    </div>
+  </div>
+</div>
