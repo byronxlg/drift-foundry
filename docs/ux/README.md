@@ -21,8 +21,8 @@ Taken from the lessons of the design system run (bot msg 1559), to be tested her
 
 | # | Decision | Status |
 | --- | --- | --- |
-| 1 | The whole game: how it unfolds over six hours (pacing), not a screen | front half as now; Engine as an efficiency stage from three pieces (C); good/better/best sent |
-| 2 | First minutes: how a new player learns what to do (the advice line as now, a few guided steps, or nothing) | proposed |
+| 1 | The whole game: how it unfolds over six hours (pacing), not a screen | set: front half as now; Engine an efficiency stage from kit C (merger, splitter, overflow, lines carry a set amount); lines show load, machines show idle, Engine asks for a rate held; built after decisions 5 and 6 |
+| 2 | First minutes: how a new player learns what to do (the advice line as now, a few guided steps, or nothing) | drawn, A/B/C sent |
 | 3 | Building: pick a machine, place it, place again, cancel | proposed |
 | 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed |
 | 5 | Trouble: from seeing a problem to fixing it (tap, Next, the fix) | proposed |
@@ -207,3 +207,32 @@ a line carrying 1 item a second.
 The splitter's part (sharing one line of ore across smelters) is left out to keep the picture to
 one idea per step. What the game itself provides for this stays as 1-tiers.png's Better: lines
 show load and backups, machines show idle, Engine asks for a rate held.
+
+Byron, 2026-11-09 (#19364906), on 1-builds.png: "Yes". Decision 1 is set. What goes in the game:
+kit C (merger, splitter, overflow), a line carries a set amount and a machine has one line out,
+the pieces open on the way to Engine, full refund on demolish in Engine, lines show load and
+backups, machines show idle, and Engine asks for motors a minute held. Building waits until
+decisions 5 (trouble) and 6 (goals) are set, since both decide how load, idle and the rate goal
+are shown; then the bot checks the front half still lands Engine at about 1 h 46 m.
+
+## 2. First minutes
+
+![First minutes: A, B, C](2-first.png)
+
+Real phone shots: a new game, and Spine about 25 minutes in (`?demo=2`). Made by
+`2-first-shots.cjs` and `2-first.html`.
+
+As now, Next always names the one best move (dig here, build a burner, link this) and tapping it
+does half the work, so a player can follow it the whole game. With decision 1's kit that would
+also play the efficiency game for them.
+
+- A: as now.
+- B: teaches, then steps back. Next as now through Anchor (about 4 minutes). From Spine on it
+  only names a problem (power short, a line backed up, a machine idle) and never says what to
+  build. (pick)
+- C: one line, then nothing. A new game opens with one sentence on what to make and how; no
+  Next after that, the needs and the machine cards are the guide.
+
+Pick B: the first minutes stay easy, and from Spine the layout is the player's, which is what
+decision 1 is for. C leaves a new player stuck at the first burner.
+
