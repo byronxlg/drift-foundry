@@ -1,0 +1,90 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Archivo+Narrow:wght@600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#b9bfc2;font-family:Archivo,sans-serif;color:#162026;width:1080px}
+.h{padding:28px 32px 8px;background:#fff}
+.h h1{font:700 34px/1.1 "Archivo Narrow";margin:0}
+.h p{font:400 19px/1.35 Archivo;margin:8px 0 18px;color:#56616a}
+.opt{background:#fff;margin:14px 0 0;padding:20px 32px 24px}
+.opt h2{font:700 28px/1 "Archivo Narrow";margin:0 0 4px}
+.opt h2 b{color:#2346d8}
+.opt .why{font:400 18px/1.35 Archivo;color:#56616a;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(9,1fr);gap:10px 6px}
+.cell{text-align:center;font:600 13px/1.2 Archivo;color:#56616a}
+.cell canvas{display:block;margin:0 auto 4px;background:#eef0ef;border-radius:10px}
+.lab{font:600 13px/1 Archivo;color:#56616a;margin:14px 0 8px}
+.small{display:flex;gap:4px;align-items:center;background:#eef0ef;padding:8px;border-radius:10px;width:max-content}
+</style></head><body>
+<div class="h"><h1>Design system, piece 2 of 8: machines</h1>
+<p>Fifteen machines in five families. Today the family is the silhouette and the output token is the only thing that tells siblings apart: smelter, kiln and refinery are the same box with a different dot, and a maker's white pips say how many inputs, not which.</p></div>
+<div id="opts"></div>
+<script>
+const SHAPE={
+  ore: 'M.2 .38L.5 .12L.84 .3L.8 .74L.38 .88L.14 .66Z',
+  coal: 'M.08 .56C.2 .3 .8 .22 .92 .44C.8 .7 .2 .8 .08 .56Z',
+  stone: 'M.5 .16C.8 .16 .9 .4 .86 .6C.8 .84 .3 .9 .16 .7C.06 .5 .2 .16 .5 .16Z',
+  quartz: 'M.5 .06L.78 .3L.78 .7L.5 .94L.22 .7L.22 .3Z',
+  ingot: 'M.06 .72L.22 .3L.78 .3L.94 .72Z',
+  plate: 'M.3 .22H.94L.7 .78H.06Z',
+  wire: 'M.5 .1A.4 .4 0 1 1 .5 .9A.4 .4 0 1 1 .5 .1ZM.5 .32A.18 .18 0 1 0 .5 .68A.18 .18 0 1 0 .5 .32Z',
+  concrete: 'M.08 .2H.44V.46H.08ZM.52 .2H.92V.46H.52ZM.08 .54H.26V.8H.08ZM.34 .54H.7V.8H.34ZM.78 .54H.92V.8H.78Z',
+  silica: 'M.3 .18A.16 .16 0 1 1 .3 .5A.16 .16 0 1 1 .3 .18ZM.7 .3A.16 .16 0 1 1 .7 .62A.16 .16 0 1 1 .7 .3ZM.4 .56A.16 .16 0 1 1 .4 .88A.16 .16 0 1 1 .4 .56Z',
+  frame: 'M.1 .1H.9V.9H.1ZM.32 .32V.68H.68V.32Z',
+  circuit: 'M.24 .24H.76V.76H.24ZM.32 .06H.4V.24H.32ZM.6 .06H.68V.24H.6ZM.32 .76H.4V.94H.32ZM.6 .76H.68V.94H.6ZM.06 .32H.24V.4H.06ZM.06 .6H.24V.68H.06ZM.76 .32H.94V.4H.76ZM.76 .6H.94V.68H.76Z',
+  motor: 'M.5 .08A.42 .42 0 1 1 .5 .92A.42 .42 0 1 1 .5 .08ZM.44 .2V.44H.2V.56H.44V.8H.56V.56H.8V.44H.56V.2Z',
+};
+
+const DEEP={
+  ore: '#a64027', coal: '#30353b', stone: '#846332', quartz: '#146c6f', ingot: '#4c606e', plate: '#155fbe',
+  wire: '#90520c', concrete: '#6e635a', silica: '#1c6e4c', frame: '#b6206b', circuit: '#1a7026', motor: '#4f6a0f',
+};
+const ON={
+  ore: '#f9b3a2', coal: '#a7aeb7', stone: '#e8bd7c', quartz: '#06d9e0', ingot: '#e3e8eb', plate: '#9cc7ff',
+  wire: '#ffb560', concrete: '#bab2aa', silica: '#12df8a', frame: '#fdacd4', circuit: '#10e32c', motor: '#96d700',
+};
+const B={drill:['x','ore',[]],coaldrill:['x','coal',[]],quarry:['x','stone',[]],quartzdrill:['x','quartz',[]],
+ smelter:['f','ingot',['ore']],kiln:['f','concrete',['stone']],refinery:['f','silica',['quartz']],
+ press:['m','plate',['ingot']],drawer:['m','wire',['ingot']],assembler:['m','frame',['plate','wire']],fabricator:['m','circuit',['silica','wire','plate']],motorworks:['m','motor',['frame','circuit','ingot']],
+ burner:['g','',['coal']],turbine:['g','',['coal']],solar:['s','',[]]};
+const NAME={drill:'Ore drill',coaldrill:'Coal drill',quarry:'Quarry',quartzdrill:'Quartz drill',smelter:'Smelter',kiln:'Kiln',refinery:'Refinery',press:'Press',drawer:'Wire drawer',assembler:'Assembler',fabricator:'Fabricator',motorworks:'Motor works',burner:'Burner',turbine:'Turbine',solar:'Solar field'};
+const M='#2c353c',EDGE='#162026',POWER='#00897b';
+const PATH={};for(const k in SHAPE)PATH[k]=new Path2D(SHAPE[k]);
+function item(g,k,x,y,s,col){g.save();g.translate(x,y);g.scale(s,s);g.fillStyle=col;g.fill(PATH[k],'evenodd');g.restore();}
+function hex(g,cx,cy,r){g.beginPath();for(let a=0;a<6;a++){const t=a/6*Math.PI*2+Math.PI/6;g[a?'lineTo':'moveTo'](cx+r*Math.cos(t),cy+r*Math.sin(t));}g.closePath();}
+// roof details for option C: each sibling its own outline feature
+function body(g,b,o,x,y,w,z){const [k]=B[b];const cx=x+w/2,cy=y+w/2,rad=Math.min(z*.2,10*z/28);g.fillStyle=M;g.strokeStyle=EDGE;g.lineWidth=Math.max(1,z*.04);g.beginPath();
+ if(k==='x'){if(o==='C'){const n={drill:3,coaldrill:2,quarry:4,quartzdrill:6}[b];for(let i=0;i<n;i++){const a=i/n*Math.PI*2-Math.PI/2;g.moveTo(cx,cy);g.arc(cx,cy,w*.5,a-.28,a+.28);}g.fill();g.beginPath();g.arc(cx,cy,w*.4,0,7);g.fill();g.stroke();return;}g.arc(cx,cy,w/2,0,7);}
+ else if(k==='g')hex(g,cx,cy,w/2);
+ else if(k==='f'){g.roundRect(x,y+w*.14,w,w*.86,rad);g.fill();g.stroke();g.beginPath();
+   if(o==='C'&&b==='kiln'){g.arc(cx,y+w*.2,w*.22,Math.PI,0);g.fill();return;}
+   if(o==='C'&&b==='refinery'){g.fillRect(x+w*.14,y,w*.18,w*.3);g.fillRect(x+w*.68,y,w*.18,w*.3);return;}
+   g.fillRect(x+w*.66,y,w*.22,w*.3);return;}
+ else if(k==='m'&&o==='C'){const n=B[b][2].length;g.roundRect(x,y,w,w,rad);g.fill();g.stroke();g.fillStyle=EDGE;for(let i=0;i<{press:1,drawer:2,assembler:3,fabricator:4,motorworks:5}[b];i++)g.fillRect(x+w*(.2+i*.14),y+w*.02,w*.08,w*.1);return;}
+ else g.roundRect(x,y,w,w,rad);
+ g.fill();g.stroke();}
+function mach(g,b,o,sx,sy,z){const [k,out,ins]=B[b];const m=z*.07,w=z-2*m,x=sx+m,y=sy+m,cx=sx+z/2,cy=sy+z/2,lod=z>=20;
+ body(g,b,o,x,y,w,z);
+ if(k==='g'){g.fillStyle=POWER;g.save();g.translate(cx,cy);if(b==='turbine'){for(let a=0;a<3;a++){g.rotate(Math.PI*2/3);g.beginPath();g.ellipse(0,-w*.18,w*.08,w*.17,0,0,7);g.fill();}}else{g.beginPath();g.moveTo(0,-w*.3);g.quadraticCurveTo(w*.3,0,0,w*.28);g.quadraticCurveTo(-w*.3,0,0,-w*.3);g.fill();}g.restore();
+   if(o==='B'&&lod)item(g,'coal',x+w*.02,y+w*.62,w*.3,ON.coal);return;}
+ if(k==='s'){g.fillStyle=POWER;const c=w*.3;for(let i=0;i<2;i++)for(let j=0;j<2;j++)g.fillRect(x+w*.16+i*(c+w*.08),y+w*.16+j*(c+w*.08),c,c);return;}
+ if(o==='B'&&lod&&ins.length){ // output token right of centre, input tokens down the left edge
+   const ts=w*.48;item(g,out,x+w*.44,cy-ts/2+(k==='f'?w*.07:0),ts,ON[out]);
+   const n=ins.length,s=Math.min(w*.26,(w*.78)/n);ins.forEach((it,i)=>item(g,it,x+w*.06,y+w*.12+(k==='f'?w*.08:0)+i*(w*.78-(k==='f'?w*.08:0))/n+((w*.78)/n-s)/2,s,ON[it]));
+   g.fillStyle=ON[out];g.beginPath();const ax=x+w*.36,ay=cy+(k==='f'?w*.07:0);g.moveTo(ax,ay-w*.06);g.lineTo(ax+w*.06,ay);g.lineTo(ax,ay+w*.06);g.fill();return;}
+ const ts=w*(k==='m'?.46:.5);item(g,out,cx-ts/2,cy-ts/2+(k==='f'?w*.07:0),ts,ON[out]);
+ if(k==='m'&&lod&&o!=='C'){g.fillStyle='#fff';for(let i=0;i<ins.length;i++)g.fillRect(x+w*.05,y+w*(.2+i*.2),w*.08,w*.12);}
+}
+const OPTS=[
+ {k:'A',t:'A. Now',why:'Silhouette per family, output token on top, white pips count the inputs. Siblings differ by a small token only; at far zoom smelter, kiln and refinery are one shape.'},
+ {k:'B',t:'B. Recipe on the building',pick:true,why:'Output token large on the right, each input as a small token down the left edge with an arrow between. You read press as ingot to plate without tapping. Below 20 px the inputs drop and only the output shows.'},
+ {k:'C',t:'C. A silhouette per machine',why:'Each sibling gets its own outline detail: drills by tooth count, kiln a dome, refinery twin stacks, makers a row of roof vents by tier. Tells them apart at every zoom, but you learn fifteen outlines.'},
+];
+const root=document.getElementById('opts');
+for(const o of OPTS){const d=document.createElement('div');d.className='opt';
+ d.innerHTML=`<h2>${o.t}${o.pick?' <b>(my pick)</b>':''}</h2><p class="why">${o.why}</p><div class="lab">At play zoom (48 px)</div>`;
+ const gr=document.createElement('div');gr.className='grid';
+ for(const b in B){const c=document.createElement('div');c.className='cell';const cv=document.createElement('canvas');const Z=64,dpr=2;cv.width=Z*dpr;cv.height=Z*dpr;cv.style.width=Z+'px';cv.style.height=Z+'px';const g=cv.getContext('2d');g.scale(dpr,dpr);mach(g,b,o.k,8,8,48);c.append(cv,NAME[b]);gr.append(c);}
+ d.append(gr);const l=document.createElement('div');l.className='lab';l.textContent='Zoomed out (18 px)';d.append(l);
+ const sm=document.createElement('div');sm.className='small';for(const b in B){const cv=document.createElement('canvas');const Z=20,dpr=2;cv.width=Z*dpr;cv.height=Z*dpr;cv.style.width=Z+'px';cv.style.height=Z+'px';const g=cv.getContext('2d');g.scale(dpr,dpr);mach(g,b,o.k,1,1,18);sm.append(cv);}d.append(sm);
+ root.append(d);}
+</script></body></html>

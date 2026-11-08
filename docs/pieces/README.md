@@ -7,7 +7,7 @@ is applied to `src/theme.js` and `docs/design-system.md`, then the next piece go
 | # | Piece | Status |
 | --- | --- | --- |
 | 1 | Items: colour plus shape (`1-items.png`) | done 2026-11-08: Byron picked C, two tones (#19364881) |
-| 2 | Machines: family silhouettes, output token | |
+| 2 | Machines: family silhouettes, output token (`2-machines.png`) | sent 2026-11-08, A now / B recipe on the building / C silhouette per machine (pick B) |
 | 3 | Map ground: nodes, belts, power reach, placing | |
 | 4 | Status marks (known: fresh game marks the next ore node "Fix" while Next says "tap an ore node") | |
 | 5 | Type | |
