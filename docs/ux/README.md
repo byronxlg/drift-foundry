@@ -329,3 +329,25 @@ Measured the same way all game, as parts a minute into the ring (the Dock).
 
 Options sent: yes (rate all game) / piles all game (simpler, but efficiency only matters as speed) /
 something else in his words.
+
+### An end goal that feeds itself
+
+Byron, 2026-11-09 (#19364917), on bot msg 1607: "That's not a goal. There needs to be an end goal.
+Look at games like moon sweepers where moving towards the goal also accelerates progress towards
+the goal". In Moon Sweepers the end is clear (the whole Moon clean) and the act of cleaning is
+also the income: dust swept is sold for better tools, so every step towards the end makes the next
+step faster. A rate into the ring has no end and does not feed back.
+
+Proposed:
+
+- A: fly the rock home (pick). The end is a place: home, a set distance away, shown as one route
+  bar with the rock on it. The ring is the engine: what reaches the Dock is thrust and moves the
+  rock. As it travels it passes debris fields that drift into reach with new, richer patches, so
+  distance covered means more to build with, more parts, more thrust. Ring parts become engine
+  stages, each making a part push further. The game ends when the rock arrives.
+- B: mine the rock out. The end is the whole rock dug (a percent cleared, like the Moon cleaned).
+  Clearing ground is the income and opens new ground underneath, so digging pays for faster
+  digging. Drops the ring story.
+
+Pick A: keeps the ring and the rock flying home that the game already tells, and adds one number
+the player watches all game (distance to home) that their factory visibly speeds up.
