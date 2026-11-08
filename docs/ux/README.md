@@ -23,7 +23,7 @@ Taken from the lessons of the design system run (bot msg 1559), to be tested her
 | --- | --- | --- |
 | 1 | The whole game: how it unfolds over six hours (pacing), not a screen | set: front half as now; Engine an efficiency stage from kit C (merger, splitter, overflow, lines carry a set amount); lines show load, machines show idle, Engine asks for a rate held; built after decisions 5 and 6 |
 | 2 | First minutes: how a new player learns what to do (the advice line as now, a few guided steps, or nothing) | drawn, A/B/C sent |
-| 2b | Screen layout: every button sits with what it changes (Byron, #19364907) | A/B sent |
+| 2b | Screen layout: every button sits with what it changes (Byron, #19364907) | A/B sent; Deliver to go, Ring dock written in steps (#19364909) |
 | 3 | Building: pick a machine, place it, place again, cancel | proposed |
 | 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed |
 | 5 | Trouble: from seeing a problem to fixing it (tap, Next, the fix) | proposed |
@@ -267,3 +267,31 @@ to hand parts over rather than build with them, but in play it lights up and get
 sent (bot msg 1582): A the ring takes needed parts from the hub by itself / B a Ring dock beside the
 Hub from the start, anything a line brings it goes to the ring, the Engine rate goal is the dock's
 rate (pick) / keep Deliver. Either way the hub band holds only stock, Research and build cards.
+
+### The Ring dock, in steps
+
+Byron, 2026-11-09 (#19364909), on bot msg 1582: "Ok well we need to design the mechanism before
+we move on". Written in plain words first, per step 2 of the flow; drawn once it has a yes.
+
+What it is: a Dock, 3 by 3 tiles, fixed beside the Hub from a new game, drawn in the ring colour.
+Lines end at the Dock the same way they end at the Hub. The Deliver button goes.
+
+The one rule: the Dock takes what the ring part still needs, and anything else goes on to the Hub.
+Nothing is lost and no line backs up because of the Dock.
+
+States:
+
+1. No line in (a new game). Next points at the Dock: "link the smelter to the Dock".
+2. Filling. Each need in the ring band shows a bar, the rate coming in, and time to full.
+3. One need full. That line's items go on to the Hub; its bar shows full. Not a problem.
+4. Ring part done. Short card: what the next part needs. Lines bringing something it does not
+   need now feed the Hub, the same as state 3.
+5. Engine. The bar becomes motors a minute against the goal, with the time it has held.
+6. Ring whole. The end screen.
+
+Actions: draw a line to the Dock, remove it (as any line), tap the Dock to see each need, its rate
+and time to full.
+
+The choice Deliver was meant to be moves into the layout: a machine's line goes to the Dock (ring)
+or to the Hub (building), and from Spine the splitter shares it. Hub stock is for building and
+Research only. Saves with stock in the Hub keep it for building.
