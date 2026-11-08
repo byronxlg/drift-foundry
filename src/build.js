@@ -9,13 +9,12 @@ const N = W.N;
 const $ = (sel, el = document) => el.querySelector(sel);
 const params = new URLSearchParams(location.search);
 const TH = { ...pick(), still: matchMedia('(prefers-reduced-motion: reduce)').matches }; applyCSS(TH);
-const COL = TH.items;
+const COL = TH.items; const COL_ON = TH.itemsOn;
 const T = TH;
 const PATH = Object.fromEntries(Object.entries(SHAPE).map(([k, d]) => [k, new Path2D(d)]));
 const KIND = { drill: 'x', coaldrill: 'x', quarry: 'x', quartzdrill: 'x', smelter: 'f', kiln: 'f', refinery: 'f', burner: 'g', turbine: 'g', solar: 's' };
 const outOf = (b) => G.BUILDINGS[b].gen ? '' : outItem(b);
 const outItem = (b) => Object.keys(G.BUILDINGS[b].out)[0];
-const colOf = (b) => (G.BUILDINGS[b].gen ? T.power : COL[outItem(b)]);
 const BAND = TH.fig;
 
 // ---------- load and save ----------
@@ -137,7 +136,7 @@ function renderHint() {
   if (txt) $('.x', h).onclick = () => setTool('');
 }
 function toast(msg, bad) { const t = $('#toast'); t.textContent = msg; t.className = 'toast' + (bad ? ' bad' : ''); t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 2200); }
-const swatch = (k, sz = 14) => itemSVG(k, COL[k], sz, TH.dark ? null : TH.ink);
+const swatch = (k, sz = 14) => itemSVG(k, COL[k], sz);
 const costHTML = (cost) => Object.entries(cost).map(([k, v]) => `<span class="c${s.stock[k] >= v ? '' : ' short'}">${swatch(k)}${G.fmt(v)}</span>`).join('') || '<span class="c">free</span>';
 
 // ---------- status ----------
@@ -625,9 +624,9 @@ function draw(now) {
 }
 
 // one machine glyph, used on the map and (at rest) for hotbar and drawer icons
-function drawItem(g, k, x, y, size, alpha = 1) {
-  g.save(); g.translate(x, y); g.scale(size, size); g.globalAlpha *= alpha; g.fillStyle = COL[k]; g.fill(PATH[k], 'evenodd');
-  if (!TH.dark) { g.strokeStyle = TH.ink; g.lineWidth = 0.08; g.lineJoin = 'round'; g.stroke(PATH[k]); }
+// an item: deep tone on the chart and belts, light tone (on = true) on a machine body
+function drawItem(g, k, x, y, size, alpha = 1, on = false) {
+  g.save(); g.translate(x, y); g.scale(size, size); g.globalAlpha *= alpha; g.fillStyle = (on ? COL_ON : COL)[k]; g.fill(PATH[k], 'evenodd');
   g.restore();
 }
 function hexPath(g, cx, cy, r) { g.beginPath(); for (let a = 0; a < 6; a++) { const t = (a / 6) * Math.PI * 2 + Math.PI / 6; g[a ? 'lineTo' : 'moveTo'](cx + r * Math.cos(t), cy + r * Math.sin(t)); } g.closePath(); }
@@ -644,7 +643,7 @@ function drawMachine(g, b, sx, sy, z, o = {}) {
     g.fillRect(x + w * 0.66, y, w * 0.22, w * 0.3);
   } else { g.beginPath(); g.roundRect(x, y, w, w, rad); g.fill(); }
   if (!TH.dark) { g.stroke(); }
-  const tok = (sz, a) => drawItem(g, out, cx - sz / 2, cy - sz / 2 + (k === 'f' ? w * 0.07 : 0), sz, a);
+  const tok = (sz, a = 1) => drawItem(g, out, cx - sz / 2, cy - sz / 2 + (k === 'f' ? w * 0.07 : 0), sz, a, true);
   if (k === 'x') { // drill bit turns when running, token in the middle
     if (lod) { g.save(); g.translate(cx, cy); g.rotate(t * 2.5); g.fillStyle = TH.dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.28)';
       for (let a = 0; a < 3; a++) { g.rotate((Math.PI * 2) / 3); g.beginPath(); g.moveTo(w * 0.2, -w * 0.08); g.lineTo(w * 0.46, 0); g.lineTo(w * 0.2, w * 0.08); g.fill(); } g.restore(); }
@@ -664,7 +663,7 @@ function drawMachine(g, b, sx, sy, z, o = {}) {
   } else { // maker: input pips on the left, token, cycle bar
     const ins = Object.keys(B.in).length; tok(w * 0.46);
     if (lod) { g.fillStyle = TH.dark ? TH.ink2 : '#ffffff'; for (let i = 0; i < ins; i++) g.fillRect(x + w * 0.05, y + w * (0.2 + i * 0.2), w * 0.08, w * 0.12);
-      if (run) { g.fillStyle = COL[out]; g.fillRect(x + w * 0.18, y + w * 0.84, w * 0.64 * ((t / B.time) % 1), w * 0.07); } }
+      if (run) { g.fillStyle = COL_ON[out]; g.fillRect(x + w * 0.18, y + w * 0.84, w * 0.64 * ((t / B.time) % 1), w * 0.07); } }
   }
 }
 const iconCache = {};
