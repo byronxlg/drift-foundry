@@ -244,11 +244,13 @@ function followAdvice() {
 }
 function nearestNode(item) { let best = -1; for (let i = 0; i < N * N; i++) if (W.nodeAt(s, i) === item && W.revealed(s, i) && W.derived(s).occ[i] === -1 && (best < 0 || W.dist(i) < W.dist(best))) best = i; return best; }
 let glideTo = null;
-function glide(i) {
-  const [px, py] = toScreen((i % N) + 0.5, ((i / N) | 0) + 0.5); const v = viewBox();
-  if (px > 30 && px < vw - 30 && py > v.top + 30 && py < v.bot - 30) return;
-  glideTo = { x: (i % N) + 0.5, y: ((i / N) | 0) + 0.5 };
+function glide(i, bot) { // bot: a lower edge above the dock (the phone panel); the tile lands in the middle of what is left
+  const [px, py] = toScreen((i % N) + 0.5, ((i / N) | 0) + 0.5); const v = viewBox(); const b = bot ?? v.bot;
+  if (px > 30 && px < vw - 30 && py > v.top + 30 && py < b - 30) return;
+  glideTo = { x: (i % N) + 0.5, y: ((i / N) | 0) + 0.5 - ((v.top + b) / 2 - v.cy) / cam.z };
 }
+const phone = () => !matchMedia('(min-width: 900px)').matches;
+function panelTop() { const d = $('#drawer'); document.documentElement.style.setProperty('--drawer', `${vh - d.getBoundingClientRect().top}px`); return d.getBoundingClientRect().top; }
 
 // ---------- HUD ----------
 let shape = ''; let nextMark = null;
@@ -323,8 +325,9 @@ function render() {
 }
 
 // ---------- drawers: inspect, stock, research, menu ----------
-function openDrawer(kind) { drawer = kind; $('#drawer').hidden = false; renderDrawer(true); }
-function closeDrawer() { drawer = ''; sel = -1; $('#drawer').hidden = true; }
+function openDrawer(kind) { drawer = kind; $('#drawer').hidden = false; document.body.classList.add('drawn'); renderDrawer(true);
+  if (phone()) { const top = panelTop(); if (kind === 'inspect' && sel >= 0) glide(sel, top); } }
+function closeDrawer() { drawer = ''; sel = -1; $('#drawer').hidden = true; document.body.classList.remove('drawn'); }
 let drawerSig = '';
 function renderDrawer(force) {
   const body = $('#drawer .dr-body'); const d = W.derived(s);
@@ -363,7 +366,7 @@ function renderDrawer(force) {
     sig += Math.floor(s.playSeconds);
   }
   if (!force && sig === drawerSig) return;
-  drawerSig = sig; body.innerHTML = html;
+  drawerSig = sig; body.innerHTML = html; if (phone()) panelTop();
 }
 // supply lines in the inspect drawer: wanted vs getting per input, each line with its rate
 const nameAt = (i) => (i === W.HUBT ? 'Hub' : G.BUILDINGS[s.world.items[W.derived(s).occ[i]].b].name);
