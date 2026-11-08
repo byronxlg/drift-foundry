@@ -21,7 +21,7 @@ Taken from the lessons of the design system run (bot msg 1559), to be tested her
 
 | # | Decision | Status |
 | --- | --- | --- |
-| 1 | The whole game: how it unfolds over six hours (pacing), not a screen | front half as now; Engine as an efficiency stage built from simple pieces, options sent |
+| 1 | The whole game: how it unfolds over six hours (pacing), not a screen | front half as now; Engine as an efficiency stage from three pieces (C); good/better/best sent |
 | 2 | First minutes: how a new player learns what to do (the advice line as now, a few guided steps, or nothing) | proposed |
 | 3 | Building: pick a machine, place it, place again, cancel | proposed |
 | 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed |
@@ -157,3 +157,27 @@ Pick B: the smallest kit that still lets a player design. A splitter that skips 
 most of what an overflow does, so C's third piece can follow later if play shows it is missed.
 After the pick: line capacity and pieces in `src/world.js`, auto-link and the bot taught to use
 them, then the bot checks the front half still lands Engine at about 1 h 46 m.
+
+Byron, 2026-11-09 (#19364904), on 1-pieces.png: "Yea this is getting there. I like c. Draw up what
+good better best would look like in terms of system design for efficiency". So the kit is C:
+merger, splitter, overflow, and lines that carry a set amount.
+
+### Good, better, best
+
+![Engine efficiency: good, better, best](1-tiers.png)
+
+Drawn with `docs/ux/1-tiers.py`. Each step adds to the one before.
+
+- Good, the kit: line limit, one line out per machine, the three pieces opening on the way to
+  Engine, full refund on demolish in Engine. The goal stays a pile, so a better layout is felt only
+  as Engine finishing sooner, with nothing saying why.
+- Better, see it and aim at it: lines thicken as they fill and go red when backed up, each machine
+  shows how often it sits idle; Engine asks for motors a minute held for ten minutes, in three
+  steps, instead of a pile. (pick)
+- Best, a score to beat: when the ring is whole the Engine factory is scored on machines, power and
+  space at its motors-a-minute rate, each with an aim and the player's best (Opus Magnum style),
+  plus "Redo Engine on this map". Local only, no shared scores.
+
+Pick Better: the target and the view of what holds it back are what make the pieces worth using.
+Best sits on top of Better without changing it, so it can follow. Numbers in the picture are
+examples until the bot sets them.
