@@ -136,7 +136,7 @@ never confused with stone's chunk).
   selected tiles. Status marks are drawn at every size. Zoom range 16 to 64 px per tile.
 - Tiles: no seams, no grid lines. With a tool in hand, tiles where the machine would run at once fill
   with `accentSoft` and a centre dot; tiles that are valid but need a pole get a faint dot only; invalid tiles stay plain and a tap names
-  why. Power reach is a `powerSoft` fill on the covered tiles (one path, so no seams where tiles meet), no circles (twenty overlapping circles read as a web of lines).
+  why. Power reach is a `powerSoft` fill on the covered tiles (one path, so no seams where tiles meet), no circles (twenty overlapping circles read as a web of lines). It shows only while placing a machine or with a generator or pole selected; no wires (piece 5, Byron picked A, 2026-11-09).
 - Rings: the selected tile gets an `ink` ring; the tile Next points at gets a one-off `accent`
   flash that expands and fades. The two never look alike.
 - Nodes: each field (a group of touching node tiles) is one rounded patch, overlapping discs of
