@@ -1,6 +1,6 @@
 name: Check
 
-# Runs on pull requests: syntax of every module and the balance gate (the bot plays the builder).
+# Runs on pull requests: syntax of every module and the balance gate (the bot plays the map with supply lines).
 on:
   pull_request:
 
@@ -17,5 +17,5 @@ jobs:
         run: node sim/balance.mjs 15 | tee sim.out && grep -E 'finished in ([4-8]h)' sim.out
       - name: Count-only model still in range
         run: node sim/balance.mjs 15 --abstract | tee abs.out && grep -E 'finished in ([4-8]h)' abs.out
-      - name: Supply lines preview in range (?flow=lines)
-        run: node sim/balance.mjs 15 --lines | tee lines.out && grep -E 'finished in ([4-8]h)' lines.out
+      - name: Other map seeds in range
+        run: for sd in 11 23; do node sim/balance.mjs 15 --seed=$sd | tee seed.out && grep -E 'finished in ([4-8]h)' seed.out; done

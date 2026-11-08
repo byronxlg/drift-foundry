@@ -46,7 +46,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-o
 .advice { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; text-align: left; padding: 8px 12px 8px 8px; border-radius: var(--rc); background: var(--raised); min-height: 48px; }
 .advice b { flex: none; font: 700 var(--t4)/1 var(--fig); color: var(--accentInk); background: var(--accent); padding: 6px 8px; border-radius: calc(var(--rc) * .6); }
 .can-deliver .advice b { background: var(--ink); color: var(--surface); }
-.advice.k-belt b, .advice.k-pole b { background: var(--bad); color: #fff; }
+.advice.k-pole b { background: var(--bad); color: #fff; }
 .adv-text { flex: 1; min-width: 0; font-size: var(--t4); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .adv-cost { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font: 600 var(--t4)/1 var(--fig); }
 .c { white-space: nowrap; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; } .c.short { color: var(--bad); }
@@ -145,7 +145,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-o
 .sheet-card .btn { width: 100%; justify-content: center; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
-/* supply lines in the inspect drawer (piece 4, ?flow=lines) */
+/* supply lines in the inspect drawer (piece 4) */
 .lh { margin: 12px 0 4px; font: 700 var(--t5)/1 var(--font); color: var(--ink2); text-transform: uppercase; letter-spacing: .04em; }
 .lines { list-style: none; margin: 0 0 8px; padding: 0; }
 .lines li { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 8px; min-height: 40px; border-bottom: 1px solid var(--line); font-size: var(--t3); }

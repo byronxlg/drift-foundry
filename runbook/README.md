@@ -34,7 +34,7 @@ repo is the source of truth; player saves are on players' devices and never reac
 
 | Watcher | Where it runs | Cadence | Checks | Alerts to | Run history |
 | --- | --- | --- | --- | --- | --- |
-| `check.yml` | GitHub Actions | every pull request | module syntax, balance gate (builder and count-only) | PR status | [actions](https://github.com/byronxlg/drift-foundry/actions) |
+| `check.yml` | GitHub Actions | every pull request | module syntax, balance gate (map with supply lines on seeds 7, 11, 23, and count-only) | PR status | [actions](https://github.com/byronxlg/drift-foundry/actions) |
 | `pages.yml` | GitHub Actions | push to `main` | balance gate, Pages deploy | GitHub's workflow failure email | [actions](https://github.com/byronxlg/drift-foundry/actions) |
 
 No off-host monitor and none is required at tier 3. The weekly fleet review runs the objective

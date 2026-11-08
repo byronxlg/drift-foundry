@@ -34,7 +34,7 @@ selection. Everything else is ink, a tone step, or an item colour.
 | --- | --- |
 | First open | The Hub on an ore field, the ore nodes, Next "Tap an ore node to dig" |
 | Placing | Lit tiles on the map, the chosen hotbar slot |
-| Running | Items on belts, segment progress in the HUD |
+| Running | Items riding supply lines, segment progress in the HUD |
 | Something broken | The broken machine's mark (only broken machines carry one) and Next naming the fix |
 | Inspect | The ringed tile and the drawer |
 | Segment ready | Deliver turns accent; Next steps back to ink |
@@ -73,8 +73,8 @@ Every colour on screen is one of these. Values in `src/theme.js`.
 | `power` | power reach, poles, generators, power figure |
 | `warn`, `bad` | starved / power short; disconnected / no power / no coal |
 | `machine`, `machineOff` | building body; stood-by or unpowered body |
-| `belt` | belts |
-| 12 item hues, two tones each | items only. Deep (`items`): swatches, belt cargo, node patches, anything on the chart or a panel. Light (`itemsOn`): output tokens and cycle bars on machine bodies |
+| `supply` | supply lines (was `belt` until belts were removed, 2026-11-08) |
+| 12 item hues, two tones each | items only. Deep (`items`): swatches, line cargo, node patches, anything on the chart or a panel. Light (`itemsOn`): output tokens and cycle bars on machine bodies |
 
 Separation: A's accent is orange and its warn is yellow, and their marks differ in shape
 (accent is never a mark on a machine). B's accent is cobalt, its bad is red.
@@ -85,7 +85,7 @@ tones 5:1 or better on `terrain` and `surface`, light item tones 6:1 or better o
 
 ## Items
 
-Colour plus shape, everywhere an item appears (HUD needs, costs, stock strip, belt cargo, output
+Colour plus shape, everywhere an item appears (HUD needs, costs, stock strip, line cargo, output
 token, node patch). One drawing function feeds both the DOM (inline SVG) and the canvas (Path2D).
 
 | Item | Shape |
@@ -104,7 +104,7 @@ token, node patch). One drawing function feeds both the DOM (inline SVG) and the
 | motor | rotor (circle with a cross) |
 
 Piece 1, Byron's pick C (2026-11-08, #19364881): one hue per item in two strengths, no outlines.
-Deep on paper (chart, panels, belts), light on machines (tokens, cycle bars); the colour is the
+Deep on paper (chart, panels, lines), light on machines (tokens, cycle bars); the colour is the
 same item everywhere, only its strength follows the ground. Node patches are the deep tone at
 16% alpha. Raw items keep earthy hues; refined and parts get distinct hues so no two greys sit
 side by side: coal near-black, ingot slate blue, stone sand, concrete warm grey (shape block, so
@@ -128,14 +128,14 @@ never confused with stone's chunk).
   only the silhouette and output show.
 - Status marks only when not running well, each with its own shape so colour is not the only
   cue: starved = `warn` triangle notch top-right; power short = nothing per machine (the HUD says
-  it once); no power = `bad` round badge with a bolt; not on a belt = `bad` broken outline (a
+  it once); no power = `bad` round badge with a bolt; no line out = `bad` broken outline (a
   game status, not a design guide); stood by = `machineOff` body with an `ink2` pause badge, no
   motion. No green dots.
 - Level of detail by tile size: under 20 px body, token and status marks only; 20 px and up adds
   motion, recipe inputs, vents and cycle bars; 40 px and up adds the machine name under the Hub ring and on
   selected tiles. Status marks are drawn at every size. Zoom range 16 to 64 px per tile.
 - Tiles: no seams, no grid lines. With a tool in hand, tiles where the machine would run at once fill
-  with `accentSoft` and a centre dot; tiles that are valid but need a belt or pole get a faint dot only; invalid tiles stay plain and a tap names
+  with `accentSoft` and a centre dot; tiles that are valid but need a pole get a faint dot only; invalid tiles stay plain and a tap names
   why. Power reach is a `powerSoft` fill on the covered tiles, no circles (twenty overlapping circles read as a web of lines).
 - Rings: the selected tile gets an `ink` ring; the tile Next points at gets a one-off `accent`
   flash that expands and fades. The two never look alike.

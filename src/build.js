@@ -3,13 +3,11 @@ import * as G from './game.js';
 import * as W from './world.js';
 import { pick, applyCSS, SHAPE, itemSVG } from './theme.js';
 
-const params0 = new URLSearchParams(location.search);
-// ?flow=lines: supply lines preview (piece 4, #19364885), its own save until Byron says yes
-const LINES = params0.get('flow') === 'lines';
-const BUILD_KEY = 'drift-foundry/build';
-const KEY = LINES ? 'drift-foundry/lines' : BUILD_KEY;
-const MODE = LINES ? 'lines' : '';
-const OLD = 'drift-foundry/save';
+// Supply lines are the game (#19364887, 2026-11-08). The save key is the one the ?flow=lines preview
+// used, so preview progress carries on; ?flow= is ignored. Older saves are read, never written.
+const KEY = 'drift-foundry/lines';
+const BUILD_KEY = 'drift-foundry/build'; // the belt builder, until 2026-11-08
+const OLD = 'drift-foundry/save'; // the list screens
 const N = W.N;
 const $ = (sel, el = document) => el.querySelector(sel);
 const params = new URLSearchParams(location.search);
@@ -24,16 +22,30 @@ const BAND = TH.fig;
 
 // ---------- load and save ----------
 let s; const sheetQueue = [];
-function fresh() { s = G.newState(); s.world = W.newWorld(undefined, MODE); W.recompute(s); }
+function fresh() { s = G.newState(); s.world = W.newWorld(); W.recompute(s); }
+const savedAt = (raw) => { try { return Number(JSON.parse(raw).saved) || 0; } catch { return -1; } };
+// An older save (belts or list screens): its machines laid out again with lines, free; the older
+// save stays where it is.
+function fromOlder(raw) {
+  try {
+    const parsed = JSON.parse(raw); const seed = parsed.world && Number.isInteger(parsed.world.seed) ? parsed.world.seed : undefined;
+    s = G.deserialize(raw); W.layOut(s, W.countsOf(parsed), seed);
+    sheetQueue.push({ title: 'Your foundry, with supply lines', body: 'Supply lines are the game now: items go machine to machine along lines that route themselves. Your machines were laid out again and linked for you. Your earlier save is kept in this browser.' });
+    return true;
+  } catch { return false; }
+}
 function load() {
-  const raw = localStorage.getItem(KEY);
   if (params.has('demo')) return demo(Number(params.get('demo')) || 3);
-  if (raw) {
+  const raw = localStorage.getItem(KEY); const belt = localStorage.getItem(BUILD_KEY);
+  // the belt save wins only when there is no lines save, or it was played after the lines save
+  const beltFirst = belt && savedAt(belt) >= 0 && (!raw || savedAt(belt) > savedAt(raw));
+  if (beltFirst && raw) localStorage.setItem(KEY + '.before-belts.' + Date.now(), raw); // never overwrite a save unread
+  if (beltFirst && fromOlder(belt)) { /* laid out from the belt save */ } else if (raw) {
     try {
       const parsed = JSON.parse(raw);
       s = G.deserialize(raw);
       try { s.world = W.loadWorld(parsed.world); W.recompute(s); } catch {
-        W.layOut(s, parsed.built || {}, (parsed.world && parsed.world.seed) || undefined);
+        W.layOut(s, W.countsOf(parsed), (parsed.world && Number.isInteger(parsed.world.seed)) ? parsed.world.seed : undefined);
         sheetQueue.push({ title: 'Map rebuilt', body: 'The map part of the save could not be read, so your machines were laid out again around the Hub.' });
       }
     } catch {
@@ -41,21 +53,7 @@ function load() {
       fresh();
       sheetQueue.push({ title: 'Save could not be read', body: 'A fresh rock was surveyed. The old save was kept in this browser in case it can be recovered.' });
     }
-  } else if (LINES && localStorage.getItem(BUILD_KEY)) {
-    try { // first open of the preview: the builder save, laid out again with lines; the builder save stays
-      const raw2 = localStorage.getItem(BUILD_KEY); const parsed = JSON.parse(raw2);
-      s = G.deserialize(raw2); const counts = {};
-      for (const it of (parsed.world && parsed.world.items) || []) counts[it.b] = (counts[it.b] || 0) + 1;
-      W.layOut(s, counts, (parsed.world && parsed.world.seed) || undefined, 'lines');
-      sheetQueue.push({ title: 'Your foundry, with supply lines', body: 'Your machines were laid out again and linked machine to machine. The belt version of your save is untouched at the normal address.' });
-    } catch { fresh(); }
-  } else if (!LINES && localStorage.getItem(OLD)) {
-    try {
-      const old = G.deserialize(localStorage.getItem(OLD));
-      s = old; W.layOut(s, { ...old.built });
-      sheetQueue.push({ title: 'Your foundry, on the map', body: 'Your earlier save was laid out on the rock, every machine on a belt to the Hub. The earlier save is untouched.' });
-    } catch { fresh(); }
-  } else fresh();
+  } else if (!(belt && fromOlder(belt)) && !(localStorage.getItem(OLD) && fromOlder(localStorage.getItem(OLD)))) fresh();
   const sum = G.catchUp(s, (Date.now() - s.saved) / 1000);
   if (sum && sum.away > 60) sheetQueue.push(awaySheet(sum));
 }
@@ -72,8 +70,8 @@ function demo(p) {
   ][Math.min(p, 4) - 1];
   s.phase = Math.min(p, 4) - 1;
   if (p >= 3) Object.assign(s.upgrades, { bits: true, hotblast: true, shifts: true });
-  W.layOut(s, plan, 20261108, MODE);
-  if (LINES) for (let k = 0; k < 40; k++) { for (let i = 0; i < 20; i++) G.tick(s, 1); W.tendLines(s, 1); }
+  W.layOut(s, plan, 20261108);
+  for (let k = 0; k < 40; k++) { for (let i = 0; i < 20; i++) G.tick(s, 1); W.tendLines(s, 1); }
   for (let i = 0; i < 900; i++) G.tick(s, 1);
   const P = G.PHASES[s.phase]; let k = 0;
   for (const it in P.need) s.delivered[it] = Math.floor(P.need[it] * [0.62, 0.38, 0.5][k++ % 3]);
@@ -104,7 +102,7 @@ document.body.innerHTML = `
 <section class="drawer" id="drawer" hidden><div class="dr-body"></div></section>
 <footer class="dock">
   <div class="tools">
-    <button data-tool="" class="tool on"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2l10 4.5-4 1.5-1.5 4z"/></svg>Select</button>${LINES ? '<button data-tool="line" class="tool"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="12" r="2.2"/><circle cx="13" cy="4" r="2.2"/><path d="M3 12C3 6 13 10 13 4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>Line</button>' : '<button data-tool="belt" class="tool"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h9V3l4 5-4 5v-3H2z"/></svg>Belt</button>'}<button data-tool="pole" class="tool"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9 1L3 9h4l-1 6 6-8H8z"/></svg>Pole</button><button data-tool="remove" class="tool"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2l4 4 4-4 2 2-4 4 4 4-2 2-4-4-4 4-2-2 4-4-4-4z"/></svg>Remove</button>
+    <button data-tool="" class="tool on"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2l10 4.5-4 1.5-1.5 4z"/></svg>Select</button><button data-tool="line" class="tool"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="12" r="2.2"/><circle cx="13" cy="4" r="2.2"/><path d="M3 12C3 6 13 10 13 4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>Line</button><button data-tool="pole" class="tool"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9 1L3 9h4l-1 6 6-8H8z"/></svg>Pole</button><button data-tool="remove" class="tool"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2l4 4 4-4 2 2-4 4 4 4-2 2-4-4-4 4-2-2 4-4-4-4z"/></svg>Remove</button>
     <span class="gap"></span><button class="tool" id="resBtn">Research</button><button class="tool" id="menuBtn">Menu</button>
   </div>
   <div class="strip" id="strip"></div>
@@ -132,8 +130,8 @@ function toTile(px, py) { const v = viewBox(); const tx = Math.floor((px - vw / 
 function centreOn(i) { cam.x = (i % N) + 0.5; cam.y = ((i / N) | 0) + 0.5; }
 
 // ---------- state for the UI ----------
-let tool = ''; // '' inspect, building key, 'belt', 'pole', 'remove'
-let sel = -1; let drawer = ''; let beltPath = null; const flashes = []; const floaters = [];
+let tool = ''; // '' inspect, building key, 'line', 'pole', 'remove'
+let sel = -1; let drawer = ''; const flashes = []; const floaters = [];
 let lineFrom = -1; let linePt = null; // line tool: chosen source tile, finger position while dragging
 function setTool(t, from = -1) {
   tool = t; lineFrom = t === 'line' ? from : -1; if (t) { sel = -1; if (drawer === 'inspect') closeDrawer(); }
@@ -143,11 +141,10 @@ function setTool(t, from = -1) {
 }
 function renderHint() {
   const h = $('#hint');
-  const txt = G.BUILDINGS[tool] ? (W.EXTRACTS[tool] ? `Tap a lit ${G.ITEMS[W.EXTRACTS[tool]].name.toLowerCase()} node to place it.` : `Tap a lit tile to place ${/^[aeiou]/i.test(G.BUILDINGS[tool].name) ? 'an' : 'a'} ${G.BUILDINGS[tool].name.toLowerCase()}. ${LINES ? 'It links itself to the nearest supply and sends its output on. Lit tiles have power; dotted ones need a pole too.' : 'Lit tiles are on the network and powered; dotted ones need a belt or a pole too.'}`)
-    : tool === 'belt' ? 'Drag from the Hub or a machine to lay belt. Two fingers to move the map.'
+  const txt = G.BUILDINGS[tool] ? (W.EXTRACTS[tool] ? `Tap a lit ${G.ITEMS[W.EXTRACTS[tool]].name.toLowerCase()} node to place it.` : `Tap a lit tile to place ${/^[aeiou]/i.test(G.BUILDINGS[tool].name) ? 'an' : 'a'} ${G.BUILDINGS[tool].name.toLowerCase()}. It links itself to the nearest supply and sends its output on. Lit tiles have power; dotted ones need a pole too.`)
     : tool === 'line' ? (lineFrom >= 0 ? `From this ${G.BUILDINGS[s.world.items[W.derived(s).occ[lineFrom]].b].name.toLowerCase()}: tap a lit machine or the Hub. Tap it again to pick another.` : 'Tap or drag from a machine to a machine that uses its output, or to the Hub.')
       : tool === 'pole' ? 'Tap inside the blue reach to extend power. Poles are free.'
-        : tool === 'remove' ? `Tap a machine, ${LINES ? 'line' : 'belt'} or pole to remove it. Machines refund half.` : '';
+        : tool === 'remove' ? `Tap a machine, line or pole to remove it. Machines refund half.` : '';
   h.hidden = !txt; h.innerHTML = txt ? `<span>${txt}</span><button class="x" aria-label="Done">Done</button>` : '';
   if (txt) $('.x', h).onclick = () => setTool('');
 }
@@ -157,16 +154,10 @@ const costHTML = (cost) => Object.entries(cost).map(([k, v]) => `<span class="c$
 
 // ---------- status ----------
 function status(it) {
-  const B = G.BUILDINGS[it.b]; const st = s.stats; const u = st.util[it.b] ?? 0;
+  const B = G.BUILDINGS[it.b];
   if (it.st === 'off') return ['Stood by', 'idle'];
-  if (it.st === 'unlinked') return ['Not on a belt to the Hub', 'bad'];
   if (it.st === 'nopower') return ['Outside power reach', 'bad'];
-  if (LINES) return lineStatus(it, B);
-  if (B.gen) return B.in.coal && u <= 0.01 && st.demand > G.CORE_MW && s.stock.coal < 1 ? ['No coal', 'bad'] : [`Running, up to ${B.gen} MW`, 'ok'];
-  if (st.powerFactor < 0.98) return [`Power short, running at ${Math.floor(st.powerFactor * 100)}%`, 'warn'];
-  const ins = Object.keys(B.in);
-  if (ins.length && u < 0.9) { const k = ins.sort((x, y) => s.stock[x] / B.in[x] - s.stock[y] / B.in[y])[0]; return [`Starved: short of ${G.ITEMS[k].name.toLowerCase()} (${Math.floor(u * 100)}%)`, 'warn']; }
-  return ['Running', 'ok'];
+  return lineStatus(it, B);
 }
 function lineStatus(it, B) {
   const st = s.stats; const ws = W.stat(it); const k = W.outItem(it.b); const nm = (x) => G.ITEMS[x].name.toLowerCase();
@@ -187,9 +178,7 @@ for (const b of G.BUILD_ORDER) for (const k of Object.keys(G.BUILDINGS[b].out)) 
 function advice() {
   if (s.phase >= G.PHASES.length) return null;
   const items = s.world.items;
-  if (LINES) { const l = W.suggestLink(s); if (l) return { kind: 'link', a: l.a, b: l.b, at: l.b === W.HUBT ? l.a : l.b, why: l.why }; }
-  const unl = items.filter((it) => it.st === 'unlinked');
-  if (unl.length) return { kind: 'belt', at: unl[0].i, why: `${unl.length} machine${unl.length > 1 ? 's are' : ' is'} not on a belt to the Hub. Draw one.` };
+  const l = W.suggestLink(s); if (l) return { kind: 'link', a: l.a, b: l.b, at: l.b === W.HUBT ? l.a : l.b, why: l.why };
   const np = items.filter((it) => it.st === 'nopower');
   if (np.length) return { kind: 'pole', at: np[0].i, why: `${np.length} machine${np.length > 1 ? 's are' : ' is'} outside power reach. Place a pole.` };
   if (!s.placed.drill && s.stock.ore < 10) return { kind: 'dig', why: `Tap an ore node to dig. ${G.fmt(s.stock.ore)} of 10 ore for a drill.` };
@@ -216,13 +205,12 @@ function advice() {
   }
   return { kind: 'build', b, why };
 }
-// the tile advice points at: a valid one on the network and in reach, nearest the Hub
+// the tile advice points at: a valid one in power reach, nearest the Hub
 function goodTile(b) {
   const d = W.derived(s); let best = -1; let bs = Infinity;
   for (let i = 0; i < N * N; i++) {
     if (W.whyNot(s, b, i)) continue;
-    const linked = LINES || W.neighbours(i).some((j) => d.conn[j]);
-    const sc = W.dist(i) + (linked ? 0 : 30) + (G.BUILDINGS[b].power && !d.cov[i] ? 30 : 0);
+    const sc = W.dist(i) + (G.BUILDINGS[b].power && !d.cov[i] ? 30 : 0);
     if (sc < bs) { bs = sc; best = i; }
   }
   return best;
@@ -231,7 +219,6 @@ function followAdvice() {
   const a = advice(); if (!a) return;
   if (a.kind === 'build') { setTool(a.b); const t = goodTile(a.b); if (t >= 0) { glide(t); flashes.push({ i: t, c: T.accent, t: performance.now() }); } }
   else if (a.kind === 'link') { const r = W.link(s, a.a, a.b); if (r.ok) { flashes.push({ i: a.at, c: T.ok, t: performance.now() }); glide(a.at); toast('Linked'); afterChange(); } else toast(r.why, true); }
-  else if (a.kind === 'belt') { setTool('belt'); glide(a.at); flashes.push({ i: a.at, c: T.bad, t: performance.now() }); }
   else if (a.kind === 'pole') { setTool('pole'); glide(a.at); flashes.push({ i: a.at, c: T.power, t: performance.now() }); }
   else if (a.kind === 'dig') { setTool(''); const t = nearestNode('ore'); if (t >= 0) { glide(t); flashes.push({ i: t, c: T.accent, t: performance.now() }); } }
 }
@@ -283,7 +270,7 @@ function render() {
     const got = need - rem[k]; tot += need; have += got;
     const inStock = Math.min(Math.floor(s.stock[k]), rem[k]);
     const r = gross[k];
-    const sub = rem[k] <= 0 ? 'delivered' : inStock >= rem[k] ? 'ready to deliver' : r > 0.001 ? `+${G.fmt(r)}/s, ${G.fmt(s.stock[k])} held` : LINES && s.made[k] > 0 ? 'none to the Hub' : 'not being made';
+    const sub = rem[k] <= 0 ? 'delivered' : inStock >= rem[k] ? 'ready to deliver' : r > 0.001 ? `+${G.fmt(r)}/s, ${G.fmt(s.stock[k])} held` : s.made[k] > 0 ? 'none to the Hub' : 'not being made';
     html += `<li class="${rem[k] <= 0 ? 'met' : r <= 0.001 && inStock < rem[k] ? 'none' : ''}">${swatch(k)}<span class="nn">${G.ITEMS[k].name}</span><span class="nv">${G.fmt(got)}<small>/${G.fmt(need)}</small></span>
       <span class="nb"><i style="width:${(got / need) * 100}%"></i><b style="width:${(Math.min(need, got + inStock) / need) * 100}%"></b></span><span class="ns">${sub}</span></li>`;
   }
@@ -295,7 +282,7 @@ function render() {
   $('#deliver').disabled = !deliverable; $('#deliver').hidden = done;
   $('#deliver').classList.toggle('ready', deliverable); document.body.classList.toggle('can-deliver', deliverable);
   const adv = advice(); const ab = $('#advice');
-  nextMark = adv && adv.kind === 'build' && !tool ? { i: goodTile(adv.b), b: adv.b } : adv && (adv.kind === 'belt' || adv.kind === 'pole' || adv.kind === 'link') ? { i: adv.at } : adv && adv.kind === 'dig' ? { i: nearestNode('ore') } : null;
+  nextMark = adv && adv.kind === 'build' && !tool ? { i: goodTile(adv.b), b: adv.b } : adv && (adv.kind === 'pole' || adv.kind === 'link') ? { i: adv.at } : adv && adv.kind === 'dig' ? { i: nearestNode('ore') } : null;
   ab.hidden = !adv;
   if (adv) {
     ab.className = `advice k-${adv.kind}`;
@@ -331,18 +318,15 @@ function renderDrawer(force) {
       const per = it.st === 'on' ? G.speed(s, it.b) * (s.stats.util[it.b] ?? 0) * (B.gen ? 1 : s.stats.powerFactor) / B.time : 0;
       const ins = Object.entries(B.in).map(([k, v]) => `${swatch(k)}${G.fmt(v * per)} ${G.ITEMS[k].name.toLowerCase()}`).join(' + ');
       const outs = B.gen ? `${B.gen} MW` : Object.entries(B.out).map(([k, v]) => `${swatch(k)}${G.fmt(v * per)} ${G.ITEMS[k].name.toLowerCase()}`).join('');
-      sig += it.st + cls + txt + (LINES ? lineSig(it) : '');
+      sig += it.st + cls + txt + lineSig(it);
       html = `<div class="dh"><img class="ic" src="${iconURL(it.b)}" alt=""><div><h2>${B.name}</h2><p class="st ${cls}">${txt}</p></div><button class="x" data-a="close" aria-label="Close">Close</button></div>
         <p class="rate">${ins ? ins + ' <span class="to">to</span> ' : ''}${outs}${B.gen ? '' : ' a second'}${B.power ? `, uses ${B.power} MW` : ''}</p>
-        ${LINES ? lineRows(it) : ''}
-        ${it.st === 'unlinked' ? '<p class="fix">Draw a belt from this machine to the Hub, or to any machine or belt that reaches it.</p>' : ''}
+        ${lineRows(it)}
         ${it.st === 'nopower' ? '<p class="fix">Place a pole inside the blue reach, toward this machine. Poles chain.</p>' : ''}
         <div class="row"><button class="btn" data-a="off">${it.off ? 'Start' : 'Stand by'}</button><button class="btn danger" data-a="demolish">Demolish <span class="cost">${costHTML(W.refundOf(s, it.b)).replace(/ short/g, '')}</span> back</button></div>`;
     } else if (o === -2) {
       sig += Math.floor(s.playSeconds);
-      html = `<div class="dh"><span class="ic hub"></span><div><h2>Hub</h2><p class="st ok">${LINES ? `Takes what ${(d.ins.get(W.HUBT) || []).length} lines bring it` : 'Holds everything the factory makes'}</p></div><button class="x" data-a="close">Close</button></div>${stockGrid()}`;
-    } else if (o === -3) {
-      html = `<div class="dh"><span class="ic belt"></span><div><h2>Belt</h2><p class="st ${d.conn[sel] ? 'ok' : 'bad'}">${d.conn[sel] ? 'Carries to the Hub' : 'Not joined to the Hub'}</p></div><button class="x" data-a="close">Close</button></div><div class="row"><button class="btn danger" data-a="demolish">Remove belt</button></div>`;
+      html = `<div class="dh"><span class="ic hub"></span><div><h2>Hub</h2><p class="st ok">Takes what ${(d.ins.get(W.HUBT) || []).length} lines bring it</p></div><button class="x" data-a="close">Close</button></div>${stockGrid()}`;
     } else if (o === -4) {
       const live = d.live.has(sel);
       html = `<div class="dh"><span class="ic pole"></span><div><h2>Power pole</h2><p class="st ${live ? 'ok' : 'bad'}">${live ? 'Live, reach 5 tiles' : 'Not live: out of reach of the grid'}</p></div><button class="x" data-a="close">Close</button></div><div class="row"><button class="btn danger" data-a="demolish">Remove pole</button></div>`;
@@ -435,9 +419,8 @@ cv.addEventListener('contextmenu', (e) => e.preventDefault());
 cv.addEventListener('pointerdown', (e) => {
   cv.setPointerCapture(e.pointerId);
   ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  if (ptrs.size === 2) { beltPath = null; const [a, b] = [...ptrs.values()]; gesture = { kind: 'pinch', d: Math.hypot(a.x - b.x, a.y - b.y), z: cam.z, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }; return; }
+  if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; gesture = { kind: 'pinch', d: Math.hypot(a.x - b.x, a.y - b.y), z: cam.z, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }; return; }
   gesture = { kind: 'maybe', x: e.clientX, y: e.clientY, t: performance.now(), pan: e.button === 1 || e.button === 2, cx: cam.x, cy: cam.y, tile: toTile(e.clientX, e.clientY) };
-  if (tool === 'belt' && !gesture.pan) { gesture.kind = 'belt'; beltPath = gesture.tile >= 0 ? [gesture.tile] : []; }
   if (tool === 'line' && !gesture.pan && gesture.tile >= 0 && W.derived(s).occ[gesture.tile] >= 0 && gesture.tile !== lineFrom && W.outItem(s.world.items[W.derived(s).occ[gesture.tile]].b)) gesture.lineStart = gesture.tile;
 });
 cv.addEventListener('pointermove', (e) => {
@@ -452,17 +435,6 @@ cv.addEventListener('pointermove', (e) => {
     return;
   }
   const moved = Math.hypot(e.clientX - gesture.x, e.clientY - gesture.y);
-  if (gesture.kind === 'belt') {
-    const t = toTile(e.clientX, e.clientY); if (t < 0 || !beltPath.length) { if (t >= 0) beltPath.push(t); return; }
-    let last = beltPath[beltPath.length - 1];
-    while (last !== t) {
-      const lx = last % N; const ly = (last / N) | 0; const tx = t % N; const ty = (t / N) | 0;
-      const step = lx !== tx ? last + Math.sign(tx - lx) : last + Math.sign(ty - ly) * N;
-      if (beltPath.length > 1 && beltPath[beltPath.length - 2] === step) beltPath.pop(); else beltPath.push(step);
-      last = step;
-    }
-    return;
-  }
   if (gesture.kind === 'maybe' && moved > 7) gesture.kind = gesture.lineStart !== undefined ? 'line' : 'pan';
   if (gesture.kind === 'line') { lineFrom = gesture.lineStart; linePt = [e.clientX, e.clientY]; return; }
   if (gesture.kind === 'pan') { cam.x = gesture.cx - (e.clientX - gesture.x) / cam.z; cam.y = gesture.cy - (e.clientY - gesture.y) / cam.z; glideTo = null; }
@@ -473,11 +445,7 @@ function endPtr(e) {
   ptrs.delete(e.pointerId);
   if (!gesture) return;
   if (gesture.kind === 'pinch') { if (ptrs.size === 0) gesture = null; else gesture = { kind: 'done' }; return; }
-  if (gesture.kind === 'belt' && beltPath) {
-    if (beltPath.length === 1 && e.type === 'pointerup') tapTile(beltPath[0]);
-    else { const n = W.placeBelts(s, beltPath); if (n) { afterChange(); toast(`${n} belt tile${n > 1 ? 's' : ''} laid`); } }
-    beltPath = null;
-  } else if (gesture.kind === 'line') {
+  if (gesture.kind === 'line') {
     linePt = null; const t = toTile(e.clientX, e.clientY);
     if (e.type === 'pointerup' && t >= 0 && t !== lineFrom) tryLink(lineFrom, t); else renderHint();
   } else if (gesture.kind === 'maybe' && e.type === 'pointerup' && !gesture.pan) tapTile(gesture.tile);
@@ -519,10 +487,9 @@ function tapTile(i) {
     }
     tryLink(lineFrom, i); return;
   }
-  if (tool === 'belt') { if (W.placeBelts(s, [i])) afterChange(); else toast(!W.revealed(s, i) ? 'Not surveyed yet.' : W.nodeAt(s, i) ? 'Keep nodes for drills: belts go on bare rock.' : 'Something is already there.', true); return; }
   if (tool === 'remove') {
-    const o = d.occ[i]; const what = o >= 0 ? G.BUILDINGS[s.world.items[o].b].name : o === -3 ? 'Belt' : o === -4 ? 'Pole' : '';
-    const ln = LINES && o < 0 ? s.world.lines.find((l) => W.route(s, l).includes(i)) : null;
+    const o = d.occ[i]; const what = o >= 0 ? G.BUILDINGS[s.world.items[o].b].name : o === -4 ? 'Pole' : '';
+    const ln = o < 0 ? s.world.lines.find((l) => W.route(s, l).includes(i)) : null;
     if (ln) { W.unlink(s, ln); toast('Line removed'); afterChange(); return; }
     if (o >= 0) { const back = W.refundOf(s, s.world.items[o].b); W.demolish(s, i); toast(`${what} removed, ${Object.entries(back).map(([k, v]) => `${G.fmt(v)} ${G.ITEMS[k].name.toLowerCase()}`).join(', ')} back`); }
     else if (what) { W.demolish(s, i); toast(`${what} removed`); }
@@ -541,20 +508,6 @@ function tapTile(i) {
 // ---------- drawing ----------
 function hash(i) { let x = i * 2654435761 >>> 0; x ^= x >>> 13; return (x & 255) / 255; }
 function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
-// belt feed colours: each running producer marks the belt path it ships along
-function feeds() {
-  const d = W.derived(s); const col = new Map();
-  for (const it of s.world.items) {
-    if (it.st !== 'on' || G.BUILDINGS[it.b].gen) continue;
-    if ((s.stats.util[it.b] ?? 0) < 0.05) continue;
-    const c = outItem(it.b);
-    for (let j of W.neighbours(it.i)) {
-      for (let k = 0; k < 80 && j >= 0 && d.occ[j] === -3 && !col.has(j); k++) { col.set(j, c); j = d.next[j]; }
-    }
-  }
-  return col;
-}
-let feedCache = null; let feedAt = 0;
 function draw(now) {
   const d = W.derived(s); const z = cam.z; const R = d.R;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -580,8 +533,8 @@ function draw(now) {
       const h = hash(i + 7); drawItem(ctx, it, sx + z * (0.1 + h * 0.15), sy + z * 0.14, z * 0.42); drawItem(ctx, it, sx + z * 0.5, sy + z * (0.45 + h * 0.1), z * 0.34);
     }
     if (placing && d.occ[i] === -1 && !W.whyNot(s, placing, i)) {
-      const good = W.neighbours(i).some((j) => d.conn[j]) && (placing === 'pole' || !G.BUILDINGS[placing].power || d.cov[i]);
-      // lit = ready to run there; elsewhere valid only gets a faint dot (it needs a belt or a pole too)
+      const good = placing === 'pole' || !G.BUILDINGS[placing].power || d.cov[i];
+      // lit = ready to run there; elsewhere valid only gets a faint dot (it needs a pole too)
       if (good) { ctx.fillStyle = TH.accentSoft; ctx.beginPath(); ctx.roundRect(sx + z * 0.08, sy + z * 0.08, z * 0.84, z * 0.84, z * 0.12); ctx.fill(); }
       ctx.fillStyle = TH.accent; ctx.globalAlpha = good ? 1 : 0.35; ctx.beginPath(); ctx.arc(sx + z / 2, sy + z / 2, Math.max(1.5, z * (good ? 0.07 : 0.045)), 0, Math.PI * 2); ctx.fill();
       ctx.globalAlpha = 1;
@@ -594,46 +547,8 @@ function draw(now) {
     ctx.fillText(`Surveyed when ${G.PHASES[s.phase].name} is in`, cx, cy - (nextR + 0.9) * z);
   }
   // power reach is the tint on the tiles alone; no circles (they stack into a web of lines)
-  // belts
-  if (!feedCache || now - feedAt > 500) { feedCache = feeds(); feedAt = now; }
-  const bw = z * 0.4;
-  ctx.lineCap = 'round';
   const centre = (i) => toScreen((i % N) + 0.5, ((i / N) | 0) + 0.5);
-  for (const i of s.world.belts) {
-    const [ax, ay] = centre(i);
-    if (ax < -z || ay < -z || ax > vw + z || ay > vh + z) continue;
-    ctx.strokeStyle = d.conn[i] ? TH.belt : TH.beltBad; ctx.lineWidth = bw;
-    ctx.beginPath(); ctx.moveTo(ax, ay);
-    let joined = false;
-    for (const j of W.neighbours(i)) {
-      const oj = d.occ[j];
-      if (oj === -3 || oj >= 0 || (oj === -2 && d.next[i] === j)) { const [bx, by] = centre(j); ctx.moveTo(ax, ay); ctx.lineTo((ax + bx) / 2, (ay + by) / 2); joined = true; }
-    }
-    if (!joined) ctx.lineTo(ax + 0.1, ay);
-    ctx.stroke();
-  }
-  // belt edges and items
-  for (const i of s.world.belts) {
-    const nx = d.next[i]; const [ax, ay] = centre(i);
-    if (ax < -z || ay < -z || ax > vw + z || ay > vh + z || nx < 0) continue;
-    const [bx, by] = centre(nx);
-    ctx.strokeStyle = TH.dark ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1;
-    const ux = (bx - ax) / z; const uy = (by - ay) / z; const m = z * 0.12;
-    ctx.beginPath(); ctx.moveTo(ax - ux * m - uy * m, ay - uy * m + ux * m); ctx.lineTo(ax + ux * m * 0.6, ay + uy * m * 0.6); ctx.lineTo(ax - ux * m + uy * m, ay - uy * m - ux * m); ctx.stroke();
-    const c = feedCache.get(i);
-    if (!c) continue;
-    for (let k = 0; k < 2; k++) {
-      const f = TH.still ? k / 2 + 0.25 : ((now / 1000) * 1.3 + k / 2 + hash(i) * 0.01) % 1;
-      const px = ax + (bx - ax) * f; const py = ay + (by - ay) * f;
-      drawItem(ctx, c, px - z * 0.13, py - z * 0.13, z * 0.26);
-    }
-  }
-  if (LINES) drawLines(now, x0, x1, y0, y1);
-  // belt being drawn
-  if (beltPath && beltPath.length) {
-    for (const i of beltPath) { const [px, py] = toScreen(i % N, (i / N) | 0); const ok = W.revealed(s, i) && d.occ[i] === -1 && !d.grid[i];
-      ctx.fillStyle = ok ? TH.accent : TH.bad; ctx.globalAlpha = ok ? 0.6 : 0.4; ctx.fillRect(px + z * 0.25, py + z * 0.25, z * 0.5, z * 0.5); ctx.globalAlpha = 1; }
-  }
+  drawLines(now, x0, x1, y0, y1);
   // hub
   {
     const [hx, hy] = toScreen(W.C - 1, W.C - 1);
@@ -665,7 +580,7 @@ function draw(now) {
     ctx.beginPath(); ctx.arc(px, py, z * 0.18, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
   }
-  if (LINES && tool === 'line' && lineFrom >= 0) drawLinePick(now);
+  if (tool === 'line' && lineFrom >= 0) drawLinePick(now);
   // the Next marker: a ghost of the suggested machine on the tile it would go, ringed in accent
   if (nextMark && nextMark.i >= 0) {
     const [px, py] = toScreen(nextMark.i % N, (nextMark.i / N) | 0);
@@ -709,7 +624,7 @@ function drawLines(now, x0, x1, y0, y1) {
     const src = s.world.items[d.occ[l.a]]; if (!src) continue;
     const pts = [path[0], path.find((j, k) => k > 0 && k < path.length - 1 && (j % N) === (path[path.length - 1] % N)) ?? path[0], path[path.length - 1]].map(ctr);
     drawn.push([l, pts, W.outItem(src.b)]);
-    ctx.strokeStyle = TH.belt; ctx.lineWidth = Math.max(1.5, z * 0.09);
+    ctx.strokeStyle = TH.supply; ctx.lineWidth = Math.max(1.5, z * 0.09);
     ctx.beginPath(); pts.forEach(([px, py], k) => (k ? ctx.lineTo(px, py) : ctx.moveTo(px, py))); ctx.stroke();
   }
   const hi = drawer === 'inspect' && sel >= 0 && d.occ[sel] >= 0 ? sel : -1; // the inspected machine's lines, on top
@@ -741,7 +656,7 @@ function drawLinePick(now) {
 }
 
 // one machine glyph, used on the map and (at rest) for hotbar and drawer icons
-// an item: deep tone on the chart and belts, light tone (on = true) on a machine body
+// an item: deep tone on the chart and lines, light tone (on = true) on a machine body
 function drawItem(g, k, x, y, size, alpha = 1, on = false) {
   g.save(); g.translate(x, y); g.scale(size, size); g.globalAlpha *= alpha; g.fillStyle = (on ? COL_ON : COL)[k]; g.fill(PATH[k], 'evenodd');
   g.restore();
@@ -812,7 +727,7 @@ function drawBuilding(it, sx, sy, z, now) {
   drawMachine(ctx, it.b, sx, sy, z, { off: it.st === 'off' || it.st === 'nopower', running, t });
   // status marks, only when something needs the player; each has its own shape
   const r = Math.max(4.5, z * 0.17); const bx = sx + z * 0.84; const by = sy + z * 0.16;
-  if (it.st === 'unlinked' || (it.st !== 'off' && it.need === 'noout')) { // broken outline
+  if (it.st !== 'off' && it.need === 'noout') { // broken outline
     ctx.strokeStyle = TH.bad; ctx.lineWidth = Math.max(2, z * 0.08); ctx.setLineDash([z * 0.22, z * 0.12]);
     ctx.beginPath(); ctx.roundRect(sx + 1, sy + 1, z - 2, z - 2, z * 0.18); ctx.stroke(); ctx.setLineDash([]);
   } else if (it.st === 'nopower') {
@@ -834,6 +749,7 @@ function drawBuilding(it, sx, sy, z, now) {
 function frame0() { cam.x = W.C + 0.5; cam.y = W.C + 0.5; cam.z = Math.max(26, fitZoom(W.revealR(s))); }
 load();
 W.recompute(s);
+save(); // a migrated or caught-up save is written at once, not 5 s later
 render();
 frame0();
 showSheet();

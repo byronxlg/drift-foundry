@@ -44,7 +44,7 @@ export const PHASES = [
   { name: 'Spine', blurb: 'A plated spine around the equator.', need: { ingot: 1200, plate: 800, wire: 1500 } },
   { name: 'Lattice', blurb: 'Frames and poured concrete to hold the spine.', need: { frame: 1500, concrete: 6000 } },
   { name: 'Nerve', blurb: 'Wire the ring so it can steer.', need: { circuit: 3000, frame: 2500, wire: 12000 } },
-  { name: 'Engine', blurb: 'Motors to spin the ring up and leave.', need: { motor: 9000, circuit: 15000, concrete: 80000 } },
+  { name: 'Engine', blurb: 'Motors to spin the ring up and leave.', need: { motor: 7500, circuit: 12500, concrete: 66000 } },
 ];
 
 export const UPGRADES = {
@@ -79,7 +79,7 @@ export const isBuildingUnlocked = (s, b) => BUILDINGS[b].phase <= unlockedPhase(
 export const isUpgradeUnlocked = (s, u) => UPGRADES[u].phase <= unlockedPhase(s);
 
 export function buildingCost(s, b) {
-  // In the builder, s.placed counts what is on the map; s.built is what is connected and powered.
+  // On the map, s.placed counts what is placed (costs grow with it); s.built is what is powered and running.
   const n = s.placed ? s.placed[b] : s.built[b];
   const out = {};
   for (const [k, v] of Object.entries(BUILDINGS[b].cost)) out[k] = Math.ceil(v * COST_GROWTH ** n);
@@ -149,7 +149,7 @@ export function checkPhase(s) {
 // Advance the factory by dt seconds. Power first, then extractors and makers in order;
 // each maker runs as far as its inputs allow. Rates and utilisation are recorded for the UI.
 export function tick(s, dt) {
-  if (s._w && s._w.flow) { s._w.flow(s, dt); return; } // supply lines: world.js runs the flow
+  if (s._w && s._w.flow) { s._w.flow(s, dt); return; } // the game: world.js runs the flow along supply lines; below is the count-only model (sim --abstract)
   const pm = powerMult(s);
   let demand = 0;
   for (const b of BUILD_ORDER) { const B = BUILDINGS[b]; if (B.power && !s.off[b]) demand += B.power * pm * s.built[b]; }
