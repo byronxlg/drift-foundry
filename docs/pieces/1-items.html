@@ -1,0 +1,78 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Archivo+Narrow:wght@600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#b9bfc2;font-family:Archivo,sans-serif;color:#162026;width:1080px}
+.h{padding:28px 32px 8px;background:#fff}
+.h h1{font:700 34px/1.1 "Archivo Narrow";margin:0}
+.h p{font:400 19px/1.35 Archivo;margin:8px 0 18px;color:#56616a}
+.opt{background:#fff;margin:14px 0 0;padding:20px 32px 24px}
+.opt h2{font:700 28px/1 "Archivo Narrow";margin:0 0 4px}
+.opt h2 b{color:#2346d8}
+.opt .why{font:400 18px/1.35 Archivo;color:#56616a;margin:0 0 14px}
+.row{display:flex;gap:20px;align-items:flex-start}
+canvas{border-radius:16px;display:block}
+.strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 12px;flex:1;background:#fff}
+.s{display:flex;align-items:center;gap:8px;font:400 17px/1 Archivo}
+.s b{font:700 17px/1 "Archivo Narrow";margin-left:auto}
+.lab{font:600 13px/1 Archivo;color:#56616a;margin:0 0 8px}
+</style></head><body>
+<div class="h"><h1>Design system, piece 1 of 8: items</h1>
+<p>Twelve items, each a colour plus a shape, on the map (node patches, tokens on machines) and in the stock strip. B's current colours were made for a dark ground: ingot, quartz and motor all but vanish on the light chart and the white panel.</p></div>
+<div id="opts"></div>
+<script>
+const SHAPE={
+  ore: 'M.2 .38L.5 .12L.84 .3L.8 .74L.38 .88L.14 .66Z',
+  coal: 'M.08 .56C.2 .3 .8 .22 .92 .44C.8 .7 .2 .8 .08 .56Z',
+  stone: 'M.5 .16C.8 .16 .9 .4 .86 .6C.8 .84 .3 .9 .16 .7C.06 .5 .2 .16 .5 .16Z',
+  quartz: 'M.5 .06L.78 .3L.78 .7L.5 .94L.22 .7L.22 .3Z',
+  ingot: 'M.06 .72L.22 .3L.78 .3L.94 .72Z',
+  plate: 'M.3 .22H.94L.7 .78H.06Z',
+  wire: 'M.5 .1A.4 .4 0 1 1 .5 .9A.4 .4 0 1 1 .5 .1ZM.5 .32A.18 .18 0 1 0 .5 .68A.18 .18 0 1 0 .5 .32Z',
+  concrete: 'M.08 .2H.44V.46H.08ZM.52 .2H.92V.46H.52ZM.08 .54H.26V.8H.08ZM.34 .54H.7V.8H.34ZM.78 .54H.92V.8H.78Z',
+  silica: 'M.3 .18A.16 .16 0 1 1 .3 .5A.16 .16 0 1 1 .3 .18ZM.7 .3A.16 .16 0 1 1 .7 .62A.16 .16 0 1 1 .7 .3ZM.4 .56A.16 .16 0 1 1 .4 .88A.16 .16 0 1 1 .4 .56Z',
+  frame: 'M.1 .1H.9V.9H.1ZM.32 .32V.68H.68V.32Z',
+  circuit: 'M.24 .24H.76V.76H.24ZM.32 .06H.4V.24H.32ZM.6 .06H.68V.24H.6ZM.32 .76H.4V.94H.32ZM.6 .76H.68V.94H.6ZM.06 .32H.24V.4H.06ZM.06 .6H.24V.68H.06ZM.76 .32H.94V.4H.76ZM.76 .6H.94V.68H.76Z',
+  motor: 'M.5 .08A.42 .42 0 1 1 .5 .92A.42 .42 0 1 1 .5 .08ZM.44 .2V.44H.2V.56H.44V.8H.56V.56H.8V.44H.56V.2Z',
+};
+const DARK={
+  ore: '#e38a60', coal: '#a6acb4', stone: '#cfae78', quartz: '#9ee6e0', ingot: '#e4ebf2', plate: '#5aa6ef',
+  wire: '#f0a43c', concrete: '#b9ad9c', silica: '#7ad6b0', frame: '#e889b0', circuit: '#55cc7c', motor: '#c6ec62',
+};
+const P={"B": {"ore": "#d36043", "coal": "#7a8492", "stone": "#a47c3e", "quartz": "#1a9195", "ingot": "#6c8699", "plate": "#3482e8", "wire": "#c16e10", "concrete": "#8e8175", "silica": "#259466", "frame": "#df4994", "circuit": "#239733", "motor": "#6a8e14"}, "Cdeep": {"ore": "#a64027", "coal": "#30353b", "stone": "#846332", "quartz": "#146c6f", "ingot": "#4c606e", "plate": "#155fbe", "wire": "#90520c", "concrete": "#6e635a", "silica": "#1c6e4c", "frame": "#b6206b", "circuit": "#1a7026", "motor": "#4f6a0f"}, "Clight": {"ore": "#f9b3a2", "coal": "#a7aeb7", "stone": "#e8bd7c", "quartz": "#06d9e0", "ingot": "#e3e8eb", "plate": "#9cc7ff", "wire": "#ffb560", "concrete": "#bab2aa", "silica": "#12df8a", "frame": "#fdacd4", "circuit": "#10e32c", "motor": "#96d700"}};
+const NAMES={ore:'Ore',coal:'Coal',stone:'Stone',quartz:'Quartz',ingot:'Ingot',plate:'Plate',wire:'Wire',concrete:'Concrete',silica:'Silica',frame:'Frame',circuit:'Circuit',motor:'Motor'};
+const AMT={ore:'1.2k',coal:'640',stone:'310',quartz:'88',ingot:'420',plate:'96',wire:'240',concrete:'60',silica:'34',frame:'12',circuit:'8',motor:'3'};
+const OPTS=[
+ {k:'A',t:'A. Now',why:'Pale fills held up by an ink outline. Outline does all the work; on white, ingot, quartz and motor read as empty outlines.',ground:k=>DARK[k],onMachine:k=>DARK[k],edge:true,alpha:.32},
+ {k:'B',t:'B. One mid tone',why:'Every item one tone, 3.3:1 on the chart and on the dark machines alike. Same colour everywhere, but coal, ingot and concrete become three similar greys.',ground:k=>P.B[k],onMachine:k=>P.B[k],edge:false,alpha:.16},
+ {k:'C',t:'C. Two tones, deep on paper, light on machines',why:'Same hue, two strengths: deep on the chart and panels (5:1 or better), light on the dark machine bodies (6:1 or better). Strongest everywhere, no outlines.',ground:k=>P.Cdeep[k],onMachine:k=>P.Clight[k],edge:false,alpha:.16,pick:true},
+];
+const PATH={};for(const k in SHAPE)PATH[k]=new Path2D(SHAPE[k]);
+function item(g,k,x,y,s,col,edge){g.save();g.translate(x,y);g.scale(s,s);g.fillStyle=col;g.fill(PATH[k],'evenodd');if(edge){g.strokeStyle='#162026';g.lineWidth=.08;g.lineJoin='round';g.stroke(PATH[k]);}g.restore();}
+const Z=46,W=11,Hh=5;
+// layout: nodes, machines (kind, output), belts
+const NODES=[[0,0,'ore'],[1,0,'ore'],[0,4,'coal'],[4,4,'stone'],[10,0,'quartz'],[10,4,'coal']];
+const MACH=[[1,1,'x','ore'],[0,3,'x','coal'],[4,3,'x','stone'],[9,0,'x','quartz'],
+ [3,1,'f','ingot'],[6,3,'f','concrete'],[8,1,'f','silica'],[5,1,'m','plate'],[6,1,'m','wire'],[7,3,'m','frame'],[8,3,'m','circuit'],[9,3,'m','motor']];
+const BELT=[[2,1],[4,1],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[8,2],[9,2],[9,1],[5,3],[0,2]];
+function map(o){
+ const c=document.createElement('canvas');const dpr=2;c.width=W*Z*dpr;c.height=Hh*Z*dpr;c.style.width=W*Z+'px';c.style.height=Hh*Z+'px';
+ const g=c.getContext('2d');g.scale(dpr,dpr);g.fillStyle='#eef0ef';g.fillRect(0,0,W*Z,Hh*Z);
+ for(const [x,y,k] of NODES){const sx=x*Z,sy=y*Z;g.fillStyle=o.ground(k);g.globalAlpha=o.alpha;g.fillRect(sx,sy,Z,Z);g.globalAlpha=1;
+  item(g,k,sx+Z*.12,sy+Z*.14,Z*.42,o.ground(k),o.edge);item(g,k,sx+Z*.5,sy+Z*.5,Z*.34,o.ground(k),o.edge);}
+ g.fillStyle='#a3acb2';for(const [x,y] of BELT){g.fillRect(x*Z+Z*.3,y*Z,Z*.4,Z);g.fillRect(x*Z,y*Z+Z*.3,Z,Z*.4);}
+ for(const [x,y,kd,out] of MACH){const sx=x*Z,sy=y*Z,m=Z*.07,w=Z-2*m,cx=sx+Z/2,cy=sy+Z/2;
+  g.fillStyle='#2c353c';g.strokeStyle='#162026';g.lineWidth=Z*.04;g.beginPath();
+  if(kd==='x'){g.arc(cx,cy,w/2,0,7);g.fill();g.stroke();}
+  else if(kd==='f'){g.roundRect(sx+m,sy+m+w*.14,w,w*.86,Z*.2);g.fill();g.stroke();g.fillRect(sx+m+w*.66,sy+m,w*.22,w*.3);}
+  else{g.roundRect(sx+m,sy+m,w,w,Z*.2);g.fill();g.stroke();g.fillStyle='#fff';const n={plate:1,wire:1,frame:2,circuit:2,motor:3}[out];for(let i=0;i<n;i++)g.fillRect(sx+m+w*.05,sy+m+w*(.2+i*.2),w*.08,w*.12);}
+  const sz=w*(kd==='m'?.46:.5);item(g,out,cx-sz/2,cy-sz/2+(kd==='f'?w*.07:0),sz,o.onMachine(out),o.edge);}
+ return c;}
+const root=document.getElementById('opts');
+for(const o of OPTS){const d=document.createElement('div');d.className='opt';
+ d.innerHTML=`<h2>${o.t}${o.pick?' <b>(my pick)</b>':''}</h2><p class="why">${o.why}</p><div class="lab">Map at play zoom</div>`;
+ const rw=document.createElement('div');rw.className='row';const mc=document.createElement('div');mc.append(map(o));rw.append(mc);const sc=document.createElement('div');sc.style.flex='1';const l=document.createElement('div');l.className='lab';l.style.margin='0 0 8px';l.textContent='Stock strip, white panel';sc.append(l);
+ const st=document.createElement('div');st.className='strip';st.style.gridTemplateColumns='repeat(2,1fr)';st.style.gap='12px 18px';
+ for(const k in NAMES){const e=document.createElement('div');e.className='s';
+  e.innerHTML=`<svg width="20" height="20" viewBox="0 0 1 1"><path d="${SHAPE[k]}" fill="${o.ground(k)}" fill-rule="evenodd" ${o.edge?'stroke="#162026" stroke-width=".07" stroke-linejoin="round"':''}/></svg>${NAMES[k]}<b>${AMT[k]}</b>`;st.append(e);}
+ sc.append(st);rw.append(sc);d.append(rw);root.append(d);}
+</script></body></html>
