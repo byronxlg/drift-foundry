@@ -1,3 +1,10 @@
+---
+project: drift-foundry
+reviewed: 2026-11-08
+deploy_path: push-to-main
+rollback_minutes: 10
+---
+
 # drift-foundry: updates and rollback
 
 ## How a change ships
