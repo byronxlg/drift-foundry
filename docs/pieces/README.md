@@ -9,7 +9,7 @@ is applied to `src/theme.js` and `docs/design-system.md`, then the next piece go
 | 1 | Items: colour plus shape (`1-items.png`) | done 2026-11-08: Byron picked C, two tones (#19364881) |
 | 2 | Machines: family silhouettes, output token (`2-machines.png`) | done 2026-11-08: Byron picked B plus C, silhouette per machine with the recipe inside (#19364882) |
 | 3 | Map ground: nodes, buildable tiles, survey edge (`3-ground.png` shown 2026-11-08; Byron: it conflated power, belts and ground, so split) | after 4 |
-| 4 | Belts: the mechanic first (`4-belts.png`), A tether to the Hub (now) / B real belts tile by tile / C supply lines (pick C) | sent 2026-11-08 (#19364883, #19364884) |
+| 4 | Belts: the mechanic first (`4-belts.png`), A tether to the Hub (now) / B real belts tile by tile / C supply lines (pick C) | Byron picked C 2026-11-08 (#19364885); preview at `?flow=lines`, waiting on his yes |
 | 5 | Power: reach, poles, generators | after 4 |
 | 6 | Status marks (known: fresh game marks the next ore node "Fix" while Next says "tap an ore node") | |
 | 7 | Type | |

@@ -168,3 +168,79 @@ Panels are `#1b2127` at 94% over the map, radius 10, no shadows except sheets.
 a node for extractors), lays the belt to the network and chains poles to reach. 2026-11-08: 6h 14m
 at 15 s checks, 5h 18m to 6h 31m across 15-45 s, same on five map seeds; 293 machines, about 75 belt
 tiles. `--abstract` runs the old count-only model.
+
+## Supply lines (piece 4, belts as a mechanic)
+
+Byron picked C on the belts sheet (#19364885, 2026-11-08): items really move machine to machine,
+so ratios and placement matter, but a link is one drag from one machine to another and the line
+routes itself. It replaces the tether to the Hub. Preview at `?flow=lines` (own save key,
+`drift-foundry/lines`) until he says yes; then it becomes the game and belts go.
+
+### Rules
+
+- A line joins a producer to a consumer: a machine that makes an item to a machine whose recipe
+  uses it (coal to a burner or turbine counts), or to the Hub, which takes anything. One line per
+  pair. Generators and solar fields make no item, so no line starts at them.
+- The Hub is a sink: build costs, research and deliveries are paid from what lines bring it. It
+  never feeds a machine, so a smelter runs only on ore a drill sends it.
+- A producer splits its output evenly over its lines to machines; a machine that is full passes
+  its share on to the others (water-fill). The Hub takes what is left over, so a Hub line is
+  income from surplus, not a fixed share stolen from the factory. A producer with no room anywhere
+  holds up to four cycles of output, then stops (backed up).
+- Placing a machine links it for you: each input from the nearest producers of it until their
+  output covers its want (at most two per input), and its output to the Hub (coal to the nearest
+  generator). The line tool is for changing that, not for every link.
+- A consumer keeps a buffer per input (six cycles of its recipe) and runs as far as its buffers
+  allow. Generators burn coal from their own buffer.
+- Lines are free, have no length cap and no throughput cap; they route along surveyed tiles
+  around machines and the Hub, may cross each other and nodes, and re-route when something is
+  placed on them. Placement matters through power reach, nodes and how many lines share a source.
+- Power is unchanged (reach, poles, one shared pool); piece 5 decides its look and rules. Coal
+  drills keep full speed in a brownout, so a short grid cannot starve its own fuel.
+- Costs still grow with what is placed; demolishing a machine removes its lines and refunds half.
+
+### Patterns borrowed
+
+1. Mini Metro line drawing: drag from one station to another, the line routes itself. Changes the
+   link from tile-by-tile belts to one gesture per link.
+2. Factorio production stats and the Satisfactory inspect panel: per-machine "wanted vs getting"
+   per input. Changes the inspect drawer into the ratio tool.
+3. Dyson Sphere Program logistics stations: endpoints matter, not the path. Changes what the map
+   asks of a person: where things sit relative to each other, not belt geometry.
+4. Mindustry core: the Hub stays the only store; delivery and building draw from it.
+5. Builderment's one-finger belt drag on phones: no rotation, no splitter pieces; splitting is the
+   machine's job.
+
+### State map
+
+| State | Actions | Way forward |
+| --- | --- | --- |
+| Line tool, nothing chosen | Tap or press a machine with an output; tap the Hub (toast: lines end at the Hub) | Source chosen, valid targets lit |
+| Source chosen | Tap or drag to a lit target; tap the source again or Done to cancel; pan with two fingers | Line laid, it routes itself, source stays chosen for the next link |
+| Invalid target | Toast says why (does not use ore / same machine / already linked / empty rock) | Lit targets stay lit; pick one |
+| New machine, no line out | Dashed outline; inspect "No line out"; advice opens the line tool on it | One line to the Hub or a consumer |
+| Maker with an input that has no line in | Amber mark; inspect "No ore line in" | Advice opens the line tool on the nearest producer of it |
+| Starved (getting under 90% of wanted) | Amber mark; inspect lists wanted vs getting per input | Link another producer, or build one (advice) |
+| Backed up (held output full) | Amber mark; inspect "Backed up: nothing takes its ingot" | Line to the Hub or another consumer |
+| Generator with no fuel line | Amber mark; inspect "No coal line in" | Advice opens the line tool on the nearest coal drill, or builds one |
+| Hub gets none of an item it needs (cost or segment) | Needs row reads "none reaching the Hub" | Advice: line from a producer of it to the Hub |
+| Inspect a machine | Lines in and out with their rate, remove any; stand by; demolish | Back to the map |
+| Remove tool on a line | Removes the top line on that tile | Producers re-split at once |
+| Demolish a machine | Its lines go with it, buffers lost, half refund | Neighbours re-split |
+| Place a machine across a line | Allowed; the line re-routes, or is drawn straight if boxed in; never dropped | No state change |
+| Reload / away | Buffers and held output are saved; catch-up runs the flow | Away sheet as before |
+| First open of the preview with a builder save | Laid out again with lines, free, the builder save untouched | Sheet says so |
+
+Review before build (2026-11-08, independent agent) folded in: Hub as overflow not a share,
+auto-link on placing, coal drills ride out brownouts, fuel-line and Hub-income rows, boxed-in
+lines kept. Left for later: a per-producer Hub reserve share, listing backed-up producers on the
+away sheet.
+
+### Pacing
+
+2026-11-08: 6h 18m to 7h 42m across 15-45 s checks and seeds 7, 11, 23 (belts: 6h 14m); about 4 lines per machine, most laid by auto-link. Retune toward 6 h after the yes.
+
+The bot places like a person (the same auto-link), then lays lines the way a careful person would: each new maker draws from the nearest producers
+of each input until their shares cover its want, each new producer links to the Hub (coal to a
+generator) and to the most starved consumer of its item, and every check it links a producer to
+any consumer starved for a while and gives a backed-up producer a line to the Hub.
