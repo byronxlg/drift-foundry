@@ -126,11 +126,16 @@ never confused with stone's chunk).
   as a small token down the left edge, an arrow in the output tone between. A furnace's recipe is
   at 75% strength when idle and full when running. Under 20 px inputs, arrow and vents drop and
   only the silhouette and output show.
-- Status marks only when not running well, each with its own shape so colour is not the only
-  cue: starved = `warn` triangle notch top-right; power short = nothing per machine (the HUD says
-  it once); no power = `bad` round badge with a bolt; no line out = `bad` broken outline (a
-  game status, not a design guide); stood by = `machineOff` body with an `ink2` pause badge, no
-  motion. No green dots.
+- Problem marks, five states (piece 6, Byron 2026-11-09): trouble shows where it is. Machine
+  marks only for the machine's own trouble: no power = `bad` round badge with a white bolt, top
+  right; stood by = `machineOff` body with a `surface` badge, `ink2` ring and pause. Line trouble
+  on the line: short of input = the line coming in for the short item goes `warn`, thicker and
+  dashed (no line in at all: a dashed `warn` stub on the way in); output piling up = the line out
+  goes `warn` with three of the output queued at the door and no items moving (no line out is
+  the same thing: a `warn` stub with the three queued, on a free side toward the Hub, never into
+  it). Queues and stubs draw after the machines so a neighbour never hides them. Running = plain
+  line, items moving. Power short = nothing per machine (the HUD says it once). No green dots;
+  the map marker always says Next (no Fix).
 - Level of detail by tile size: under 20 px body, token and status marks only; 20 px and up adds
   motion, recipe inputs, vents and cycle bars; 40 px and up adds the machine name under the Hub ring and on
   selected tiles. Status marks are drawn at every size. Zoom range 16 to 64 px per tile.
