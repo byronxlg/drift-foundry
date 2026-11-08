@@ -1,0 +1,19 @@
+name: Check
+
+# Runs on pull requests: syntax of every module and the balance gate (the bot plays the builder).
+on:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: for f in src/*.js sim/*.mjs; do node --check "$f"; done
+      - name: Balance check (the bot must finish between 4 h and 9 h)
+        run: node sim/balance.mjs 15 | tee sim.out && grep -E 'finished in ([4-8]h)' sim.out
+      - name: Count-only model still in range
+        run: node sim/balance.mjs 15 --abstract | tee abs.out && grep -E 'finished in ([4-8]h)' abs.out

@@ -1,10 +1,17 @@
 // Balance bot: plays Drift Foundry the way an attentive person would and reports phase times.
 // node sim/balance.mjs [checkEverySeconds=15] [tapsPerSecond=3]
 import * as G from '../src/game.js';
+import * as W from '../src/world.js';
 
-const period = Number(process.argv[2] || 15);
-const taps = Number(process.argv[3] || 3);
+const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+const period = Number(args[0] || 15);
+const taps = Number(args[1] || 3);
 const s = G.newState(0);
+// Default: the bot plays the builder (places on nodes, lays belts and poles). --abstract: counts only.
+const spatial = !process.argv.includes('--abstract');
+const seed = Number((process.argv.find((a) => a.startsWith('--seed=')) || '--seed=7').slice(7));
+if (spatial) { s.world = W.newWorld(seed); W.recompute(s); }
+const build = (b) => (spatial ? W.autoBuild(s, b) : G.build(s, b));
 const producerOf = {};
 for (const b of G.BUILD_ORDER) for (const k of Object.keys(G.BUILDINGS[b].out)) producerOf[k] ??= b;
 
@@ -61,12 +68,13 @@ while (!s.done && s.playSeconds < 20 * 3600) {
   G.tick(s, 1);
   if (s.playSeconds - last < period) continue;
   last = s.playSeconds;
+  if (spatial) W.repair(s);
   for (const u in G.UPGRADES) G.buyUpgrade(s, u);
   for (const b in s.off) delete s.off[b];
   let t = target();
   for (let i = 0; i < 4 && t; i++) {
     const cost = G.buildingCost(s, t);
-    if (G.build(s, t)) { builds++; for (const k in cost) starved[k] = 0; continue; }
+    if (build(t)) { builds++; for (const k in cost) starved[k] = 0; continue; }
     // can't afford: make sure something produces what is missing
     const missing = Object.keys(cost).find((k) => s.stock[k] < cost[k]);
     for (const k in reserve) delete reserve[k];
@@ -87,5 +95,7 @@ for (const m of marks) {
   console.log(`${m.phase.padEnd(8)} done at ${G.fmtTime(m.at).padStart(8)}  (+${G.fmtTime(m.at - prev)})  ${Object.entries(m.builds).filter(([, v]) => v).map(([k, v]) => k + ':' + v).join(' ')}`);
   prev = m.at;
 }
+if (spatial && process.env.DEBUG) console.log(JSON.stringify(s.world.items.filter((it) => it.st !== "on").map((it) => [it.b, it.st, Math.round(W.dist(it.i))])), JSON.stringify(s.placed), JSON.stringify(s.built), JSON.stringify(Object.fromEntries(Object.entries(s.stock).map(([k,v])=>[k,Math.round(v)]))));
+if (spatial) console.log(`map: ${s.world.items.length} machines, ${s.world.belts.length} belt tiles, ${s.world.poles.length} poles, ${s.world.items.filter((it) => it.st !== 'on').length} not counting`);
 console.log(s.done ? `finished in ${G.fmtTime(s.done)}, ${builds} builds` : `not finished after ${G.fmtTime(s.playSeconds)}; phase ${s.phase} remaining ${JSON.stringify(G.remaining(s))}`);
 if (process.env.DEBUG) console.log(JSON.stringify({ built: s.built, stock: Object.fromEntries(Object.entries(s.stock).map(([k, v]) => [k, Math.round(v)])), util: s.stats.util, sup: s.stats.supply, dem: s.stats.demand, reserve }, null, 0));
