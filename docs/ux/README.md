@@ -260,3 +260,10 @@ build cards. Bars show the part Deliver would add, striped in the hub colour.
 
 Pick A: nothing is hidden behind a tap, and the rule reads from the colours alone. Shots are mock-ups
 over the real game (`?demo=2`), made by `2b-panels.html` and `2b-panels-shot.cjs`.
+
+Byron, 2026-11-09 (#19364908), on 2b-panels.png: "What is the reason we need a deliver button at
+all?" None that holds: the ring and build costs share hub stock, so Deliver was meant as the moment
+to hand parts over rather than build with them, but in play it lights up and gets pressed. Options
+sent (bot msg 1582): A the ring takes needed parts from the hub by itself / B a Ring dock beside the
+Hub from the start, anything a line brings it goes to the ring, the Engine rate goal is the dock's
+rate (pick) / keep Deliver. Either way the hub band holds only stock, Research and build cards.
