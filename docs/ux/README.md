@@ -27,7 +27,7 @@ Taken from the lessons of the design system run (bot msg 1559), to be tested her
 | 3 | Building: pick a machine, place it, place again, cancel | proposed |
 | 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed |
 | 5 | Trouble: from seeing a problem to fixing it (tap, Next, the fix) | proposed |
-| 6 | Goals: knowing what to make next, delivering, the map growing, and where the player sees the road ahead (the ring list, 1-road.png) | end goal set: mine the land (#19364920), steps await a yes |
+| 6 | Goals: knowing what to make next, delivering, the map growing, and where the player sees the road ahead (the ring list, 1-road.png) | end goal set: mine the land; steps agreed (#19364921), picture 6-goal.png sent with three open picks |
 | 7 | Research: what it unlocks and when you see it | proposed |
 | 8 | Coming back: the away summary and picking up where you were | proposed |
 | 9 | Menu: save, new game, settings | proposed |
@@ -391,3 +391,14 @@ The goal in plain steps, for a yes before anything is drawn:
 
 Open after the yes: how big a patch is, how land opens (in rings as today, or by choosing where
 next), and what the end screen says.
+
+Byron, 2026-11-09 (#19364921), on bot msg 1616 (the steps above): "Yes". Steps agreed.
+
+Picture: `6-goal.png` (`6-goal.html`, shot with `6-goal-shot.cjs`, repo root served on :8794).
+As now beside mine the land: one bar (land mined, with a mark where the next stretch opens), each
+patch showing what is left, a mined-out patch greyed, the next stretch hatched. The open three,
+with picks sent for a yes or change:
+
+- How land opens: in rings, as today, at marks on the bar. Choosing where is a later option.
+- Patch size: about 20 minutes for the drills on it, set in the balance sim.
+- End screen: "Posting complete", land mined 100 percent, time taken, New posting or Keep playing.
