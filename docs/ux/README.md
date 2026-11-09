@@ -23,11 +23,11 @@ Taken from the lessons of the design system run (bot msg 1559), to be tested her
 | --- | --- | --- |
 | 1 | The whole game: how it unfolds over six hours (pacing), not a screen | set: front half as now; Engine an efficiency stage from kit C (merger, splitter, overflow, lines carry a set amount); lines show load, machines show idle, Engine asks for a rate held; built after decisions 5 and 6 |
 | 2 | First minutes: how a new player learns what to do (the advice line as now, a few guided steps, or nothing) | drawn, A/B/C sent |
-| 2b | Screen layout: every button sits with what it changes (Byron, #19364907) | A/B sent; Deliver to go, Ring dock written in steps (#19364909) |
-| 3 | Building: pick a machine, place it, place again, cancel | proposed |
+| 2b | Screen layout: every button sits with what it changes (Byron, #19364907) | A/B sent; Deliver goes; the Ring dock is no longer needed, the ring goes with decision 6 |
+| 3 | Building: pick a machine, place it, place again, cancel | steps sent for a yes |
 | 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed |
 | 5 | Trouble: from seeing a problem to fixing it (tap, Next, the fix) | proposed |
-| 6 | Goals: knowing what to make next, delivering, the map growing, and where the player sees the road ahead (the ring list, 1-road.png) | end goal set: mine the land; steps agreed (#19364921), picture 6-goal.png sent with three open picks |
+| 6 | Goals: knowing what to make next, delivering, the map growing, and where the player sees the road ahead (the ring list, 1-road.png) | set: mine the land; steps and the three picks agreed (#19364921, #19364922); built after decision 5 |
 | 7 | Research: what it unlocks and when you see it | proposed |
 | 8 | Coming back: the away summary and picking up where you were | proposed |
 | 9 | Menu: save, new game, settings | proposed |
@@ -308,7 +308,29 @@ Made by `2b-explain.html` and `2b-explain-shot.cjs`. The question stays the one 
 in plain words: lines into a Dock decide what goes to the ring (pick), or the ring takes from the
 Hub by itself, or keep the button.
 
-## The one goal
+## 3. Building
+
+As now (`src/build.js`): tap a machine card, a sentence appears at the top ("Tap a lit tile to
+place a smelter. It links itself..."), tap a tile to place it. The tool stays on, so each tap places
+another. A bad tile flashes red with a toast. Done, Escape or another card ends it. Placed wrong:
+Remove gives half back.
+
+Proposed steps, for a yes before drawing:
+
+1. Tap a machine card in the Hub band. The card lights and the map shows where it can go: lit
+   tiles, and for a drill only patches with ore left. No sentence.
+2. Tap a tile. It is placed, the cost leaves the Hub, it links itself to the nearest supply (as
+   now). The card stays lit, so the next tap places another; the card shows the new cost.
+3. A tile it cannot go on flashes red with a few words: "no power", "patch mined out", "2 plates
+   short".
+4. A card you cannot afford is greyed with the short part in red. Tapping it says what is short
+   and does not start placing.
+5. Stop: tap the lit card again, or Escape. No Done button.
+6. Placed by mistake: for 5 seconds after placing, an Undo on the toast gives all of it back.
+   After that, Remove gives half, as now.
+
+What changes from today: the sentence goes (too much text, #19364907), the map shows where instead,
+drills only light on patches with ore, and a short full-refund undo.
 
 Byron, 2026-11-09 (#19364912), on bot msg 1588: "I think we have to talk about the overall goal of
 the game. What is the goal? There should only be one goal throughout the game".
@@ -402,3 +424,6 @@ with picks sent for a yes or change:
 - How land opens: in rings, as today, at marks on the bar. Choosing where is a later option.
 - Patch size: about 20 minutes for the drills on it, set in the balance sim.
 - End screen: "Posting complete", land mined 100 percent, time taken, New posting or Keep playing.
+
+Byron, 2026-11-09 (#19364922), on bot msg 1618 (the three picks): "Yes". Decision 6 is set.
+Since the ring goes, the Ring dock in 2b goes with it: lines end at the Hub, nothing else.
