@@ -64,6 +64,8 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-o
 .toast { position: fixed; z-index: 6; left: 50%; transform: translateX(-50%); top: calc(var(--hudh, 190px) + 12px); max-width: calc(100vw - 32px);
   padding: 10px 14px; border-radius: var(--rc); background: var(--ink); color: var(--surface); font-weight: 600; font-size: var(--t4); pointer-events: none; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
 .toast.bad { background: var(--bad); color: #fff; }
+.toast.act { pointer-events: auto; display: flex; align-items: center; gap: 12px; padding-right: 6px; }
+.toast.act button { min-height: 36px; padding: 0 14px; border-radius: var(--rc); background: var(--accent); color: var(--accentInk); font-weight: 700; }
 
 /* dock: tools, stock strip, hotbar */
 .dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; background: var(--surface);
