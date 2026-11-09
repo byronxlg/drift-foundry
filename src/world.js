@@ -173,7 +173,7 @@ export function shortOf(s, cost) {
 }
 const pay = (s, cost) => { for (const [k, v] of Object.entries(cost)) s.stock[k] -= v; };
 
-export function place(s, b, i) {
+export function place(s, b, i, { link = true } = {}) {
   if (b !== 'pole' && !G.isBuildingUnlocked(s, b)) return { ok: false, why: 'Not unlocked yet.' };
   if (b === 'pole' && !isPoleUnlocked(s)) return { ok: false, why: 'Power poles open with the Spine.' };
   const why = whyNot(s, b, i); if (why) return { ok: false, why };
@@ -182,7 +182,7 @@ export function place(s, b, i) {
   pay(s, cost);
   if (b === 'pole') s.world.poles.push(i); else s.world.items.push({ b, i, off: false, buf: {}, held: 0 });
   recompute(s);
-  if (b !== 'pole') autoLink(s, i);
+  if (b !== 'pole' && link) autoLink(s, i);
   return { ok: true };
 }
 

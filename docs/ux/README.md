@@ -30,7 +30,7 @@ Pictures stay for the whole-game and goal decisions, which cannot be tried in a 
 | 2 | First minutes: how a new player learns what to do (the advice line as now, a few guided steps, or nothing) | drawn, A/B/C sent |
 | 2b | Screen layout: every button sits with what it changes (Byron, #19364907) | A/B sent; Deliver goes; the Ring dock is no longer needed, the ring goes with decision 6 |
 | 3 | Building: pick a machine, place it, place again, cancel | playable: `?ux=3`, waiting on his try |
-| 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed |
+| 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed; no automatic line on placing (B, #19364926), in `?ux=3` |
 | 5 | Trouble: from seeing a problem to fixing it (tap, Next, the fix) | proposed |
 | 6 | Goals: knowing what to make next, delivering, the map growing, and where the player sees the road ahead (the ring list, 1-road.png) | set: mine the land; steps and the three picks agreed (#19364921, #19364922); built after decision 5 |
 | 7 | Research: what it unlocks and when you see it | proposed |
@@ -447,6 +447,13 @@ node); a wrong tile says a few words ("no power", "nodes are for drills", "taken
 cannot afford says what is short and does not start placing; tap the lit card again or Escape to
 stop; "Smelter placed, Undo" for 5 seconds gives all of it back. Checked on a phone-size browser
 (`?demo=2&ux=3`): each of those, no console errors.
+
+Byron, 2026-11-09 (#19364925), trying it: "It automatically added the line". Placing has always
+linked a new machine to its nearest feeders and the Hub (`autoLink`); ?ux=3 had dropped the sentence
+that said so. Asked A (keep it, say it in the placed note) or B (no line until drawn); Byron,
+2026-11-09 (#19364926): "B". So in ?ux=3 placing lays no line ("Smelter placed, no line yet, Undo");
+the Next line then says what has nothing coming in and offers "tap to link". How drawing a line
+should feel is decision 4. The bot, demos and old saves still lay out with lines (`autoPlace`).
 
 Not in it yet: drills only lighting on patches with ore left, since patches do not run out until
 mine the land is built (decision 6).

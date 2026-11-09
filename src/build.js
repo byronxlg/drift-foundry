@@ -528,10 +528,10 @@ function tapTile(i) {
   if (UX3 && G.BUILDINGS[tool]) {
     const b = tool; const why = shortWhy(b, i);
     if (why) { flashes.push({ i, c: T.bad, t: now }); toast(why, true); return; }
-    const cost = G.buildingCost(s, b); const r = W.place(s, b, i);
+    const cost = G.buildingCost(s, b); const r = W.place(s, b, i, { link: false }); // B (#19364926): no line until drawn
     if (!r.ok) { flashes.push({ i, c: T.bad, t: now }); toast(r.why, true); return; }
     flashes.push({ i, c: T.ok, t: now }); afterChange();
-    toast(`${G.BUILDINGS[b].name} placed`, false, { label: 'Undo', run: () => undoPlace(i, b, cost) }, 5000);
+    toast(`${G.BUILDINGS[b].name} placed, no line yet`, false, { label: 'Undo', run: () => undoPlace(i, b, cost) }, 5000);
     return;
   }
   if (G.BUILDINGS[tool] || tool === 'pole') {
