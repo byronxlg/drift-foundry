@@ -253,7 +253,7 @@ away sheet.
 seeds 7, 11, 23: 5h 32m to 7h 4m, median 6h 6m. `--abstract` (count-only): 5h 51m. About 4 lines
 per machine, most laid by auto-link. CI gates seeds 7, 11 and 23 at 15 s and the count-only model.
 
-The bot places like a person (the same auto-link), then lays lines the way a careful person would: each new maker draws from the nearest producers
+The bot places with auto-link (players have drawn every line themselves since decision 4 B, #19364927; the bot's auto-link stands in for the lines a person draws right after placing), then lays lines the way a careful person would: each new maker draws from the nearest producers
 of each input until their shares cover its want, each new producer links to the Hub (coal to a
 generator) and to the most starved consumer of its item, and every check it links a producer to
 any consumer starved for a while and gives a backed-up producer a line to the Hub.

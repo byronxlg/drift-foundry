@@ -29,8 +29,8 @@ Pictures stay for the whole-game and goal decisions, which cannot be tried in a 
 | 1 | The whole game: how it unfolds over six hours (pacing), not a screen | set: front half as now; Engine an efficiency stage from kit C (merger, splitter, overflow, lines carry a set amount); lines show load, machines show idle, Engine asks for a rate held; built after decisions 5 and 6 |
 | 2 | First minutes: how a new player learns what to do (the advice line as now, a few guided steps, or nothing) | drawn, A/B/C sent |
 | 2b | Screen layout: every button sits with what it changes (Byron, #19364907) | A/B sent; Deliver goes; the Ring dock is no longer needed, the ring goes with decision 6 |
-| 3 | Building: pick a machine, place it, place again, cancel | playable: `?ux=3`, waiting on his try |
-| 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed; no automatic line on placing (B, #19364926), in `?ux=3` |
+| 3 | Building: pick a machine, place it, place again, cancel | set: tried on `?ux=3`, yes (#19364927); now the default |
+| 4 | Connecting: drawing a supply line from one machine to another, and undoing it | part set: no automatic line on placing (B, #19364926), tried and yes (#19364927), now the default; undoing a line still proposed |
 | 5 | Trouble: from seeing a problem to fixing it (tap, Next, the fix) | proposed |
 | 6 | Goals: knowing what to make next, delivering, the map growing, and where the player sees the road ahead (the ring list, 1-road.png) | set: mine the land; steps and the three picks agreed (#19364921, #19364922); built after decision 5 |
 | 7 | Research: what it unlocks and when you see it | proposed |
