@@ -11,8 +11,6 @@ const OLD = 'drift-foundry/save'; // the list screens
 const N = W.N;
 const $ = (sel, el = document) => el.querySelector(sel);
 const params = new URLSearchParams(location.search);
-// ?ux=3: UX decision 3 (building) to try before it becomes the default (docs/ux/README.md, #19364923)
-const UX3 = params.get('ux') === '3';
 const TH = { ...pick(), still: matchMedia('(prefers-reduced-motion: reduce)').matches }; applyCSS(TH);
 const COL = TH.items; const COL_ON = TH.itemsOn;
 const T = TH;
@@ -143,7 +141,7 @@ function setTool(t, from = -1) {
 }
 function renderHint() {
   const h = $('#hint');
-  const txt = G.BUILDINGS[tool] ? UX3 ? '' : (W.EXTRACTS[tool] ? `Tap a lit ${G.ITEMS[W.EXTRACTS[tool]].name.toLowerCase()} node to place it.` : `Tap a lit tile to place ${/^[aeiou]/i.test(G.BUILDINGS[tool].name) ? 'an' : 'a'} ${G.BUILDINGS[tool].name.toLowerCase()}. It links itself to the nearest supply and sends its output on. Lit tiles have power; dotted ones need a pole too.`)
+  const txt = G.BUILDINGS[tool] ? ''
     : tool === 'line' ? (lineFrom >= 0 ? `From this ${G.BUILDINGS[s.world.items[W.derived(s).occ[lineFrom]].b].name.toLowerCase()}: tap a lit machine or the Hub. Tap it again to pick another.` : 'Tap or drag from a machine to a machine that uses its output, or to the Hub.')
       : tool === 'pole' ? 'Tap inside the blue reach to extend power. Poles are free.'
         : tool === 'remove' ? `Tap a machine, line or pole to remove it. Machines refund half.` : '';
@@ -155,7 +153,7 @@ function toast(msg, bad, act, ms = 2200) {
   if (act) { const b = document.createElement('button'); b.textContent = act.label; b.onclick = () => { t.hidden = true; act.run(); }; t.append(b); }
   clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, ms);
 }
-// ux=3: a few words for why a tile or card says no
+// a few words for why a tile or card says no
 function shortWhy(b, i) {
   const why = W.whyNot(s, b, i);
   if (why) {
@@ -285,7 +283,7 @@ function rebuildCards() {
     const c = document.createElement('button'); c.className = 'card'; c.dataset.b = b;
     c.innerHTML = `<img class="ic" src="${iconURL(b)}" alt=""><span class="n"></span><span class="nm">${B.name}</span><span class="cost"></span>`;
     c.onclick = () => {
-      if (UX3 && tool !== b && !G.canAfford(s, G.buildingCost(s, b))) { toast(`${B.name}: ${shortParts(G.buildingCost(s, b))}`, true); return; }
+      if (tool !== b && !G.canAfford(s, G.buildingCost(s, b))) { toast(`${B.name}: ${shortParts(G.buildingCost(s, b))}`, true); return; }
       setTool(tool === b ? '' : b);
     };
     el.append(c);
@@ -509,7 +507,7 @@ function zoomAt(px, py, z) {
 addEventListener('keydown', (e) => { if (e.key === 'Escape') { setTool(''); closeDrawer(); } });
 
 function afterChange() { render(); save(); }
-// ux=3: within 5 s of placing, Undo gives all of it back
+// within 5 s of placing, Undo gives all of it back
 function undoPlace(i, b, cost) {
   const it = s.world.items.find((x) => x.i === i); if (!it || it.b !== b) return;
   const back = W.refundOf(s, b); W.demolish(s, i);
@@ -525,7 +523,7 @@ function tryLink(a, b) {
 function tapTile(i) {
   if (i < 0) return;
   const d = W.derived(s); const now = performance.now();
-  if (UX3 && G.BUILDINGS[tool]) {
+  if (G.BUILDINGS[tool]) { // decision 3, yes #19364927
     const b = tool; const why = shortWhy(b, i);
     if (why) { flashes.push({ i, c: T.bad, t: now }); toast(why, true); return; }
     const cost = G.buildingCost(s, b); const r = W.place(s, b, i, { link: false }); // B (#19364926): no line until drawn
@@ -534,7 +532,7 @@ function tapTile(i) {
     toast(`${G.BUILDINGS[b].name} placed, no line yet`, false, { label: 'Undo', run: () => undoPlace(i, b, cost) }, 5000);
     return;
   }
-  if (G.BUILDINGS[tool] || tool === 'pole') {
+  if (tool === 'pole') {
     const r = W.place(s, tool, i);
     if (r.ok) { flashes.push({ i, c: T.ok, t: now }); afterChange(); const it = s.world.items.find((x) => x.i === i); if (it && it.st !== 'on') toast(status(it)[0], true); }
     else { flashes.push({ i, c: T.bad, t: now }); toast(r.why, true); }
@@ -666,7 +664,7 @@ function draw(now) {
   if (placing) for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const i = y * N + x; if (W.dist(i) > R || d.occ[i] !== -1 || W.whyNot(s, placing, i)) continue; const [sx, sy] = toScreen(x, y);
     const good = placing === 'pole' || !G.BUILDINGS[placing].power || d.cov[i];
-    if (UX3 && !good) continue; // ux=3: only where it can go now
+    if (!good) continue; // only where it can go now
     // lit = ready to run there; elsewhere valid only gets a faint dot (it needs a pole too)
     if (good) { ctx.fillStyle = TH.accentSoft; ctx.beginPath(); ctx.roundRect(sx + z * 0.08, sy + z * 0.08, z * 0.84, z * 0.84, z * 0.12); ctx.fill(); }
     ctx.fillStyle = TH.accent; ctx.globalAlpha = good ? 1 : 0.35; ctx.beginPath(); ctx.arc(sx + z / 2, sy + z / 2, Math.max(1.5, z * (good ? 0.07 : 0.045)), 0, Math.PI * 2); ctx.fill();
