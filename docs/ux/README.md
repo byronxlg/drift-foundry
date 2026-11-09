@@ -17,6 +17,11 @@ Taken from the lessons of the design system run (bot msg 1559), to be tested her
 4. His answer goes in the game, then the next decision.
 5. At the end, one before/after of the whole game and a play-through.
 
+Byron, 2026-11-09 (#19364923): "for ux decisions I'm gonna need to try it out". So from decision 3
+on, a UX decision goes to him as something to play: the steps built behind `?ux=<n>` on the live
+game, a link to it beside the link without it (as now), and his yes or change after trying both.
+Pictures stay for the whole-game and goal decisions, which cannot be tried in a minute.
+
 ## The decisions, big to small
 
 | # | Decision | Status |
@@ -24,7 +29,7 @@ Taken from the lessons of the design system run (bot msg 1559), to be tested her
 | 1 | The whole game: how it unfolds over six hours (pacing), not a screen | set: front half as now; Engine an efficiency stage from kit C (merger, splitter, overflow, lines carry a set amount); lines show load, machines show idle, Engine asks for a rate held; built after decisions 5 and 6 |
 | 2 | First minutes: how a new player learns what to do (the advice line as now, a few guided steps, or nothing) | drawn, A/B/C sent |
 | 2b | Screen layout: every button sits with what it changes (Byron, #19364907) | A/B sent; Deliver goes; the Ring dock is no longer needed, the ring goes with decision 6 |
-| 3 | Building: pick a machine, place it, place again, cancel | steps sent for a yes |
+| 3 | Building: pick a machine, place it, place again, cancel | playable: `?ux=3`, waiting on his try |
 | 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed |
 | 5 | Trouble: from seeing a problem to fixing it (tap, Next, the fix) | proposed |
 | 6 | Goals: knowing what to make next, delivering, the map growing, and where the player sees the road ahead (the ring list, 1-road.png) | set: mine the land; steps and the three picks agreed (#19364921, #19364922); built after decision 5 |
@@ -427,3 +432,22 @@ with picks sent for a yes or change:
 
 Byron, 2026-11-09 (#19364922), on bot msg 1618 (the three picks): "Yes". Decision 6 is set.
 Since the ring goes, the Ring dock in 2b goes with it: lines end at the Hub, nothing else.
+
+### Decision 3, to try
+
+Byron, 2026-11-09 (#19364923), on bot msg 1622: "for ux decisions I'm gonna need to try it out".
+The six steps are built behind `?ux=3` (`src/build.js`, `UX3`), on his own save; nothing in the save
+changes, so going back to the link without it is safe.
+
+- Try it: https://byronxlg.com/drift-foundry/?ux=3
+- As now: https://byronxlg.com/drift-foundry/
+
+What is in it: no sentence while placing; only tiles it can go on now are lit (powered, right
+node); a wrong tile says a few words ("no power", "nodes are for drills", "taken"); a card you
+cannot afford says what is short and does not start placing; tap the lit card again or Escape to
+stop; "Smelter placed, Undo" for 5 seconds gives all of it back. Checked on a phone-size browser
+(`?demo=2&ux=3`): each of those, no console errors.
+
+Not in it yet: drills only lighting on patches with ore left, since patches do not run out until
+mine the land is built (decision 6).
+
