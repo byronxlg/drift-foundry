@@ -27,7 +27,7 @@ Taken from the lessons of the design system run (bot msg 1559), to be tested her
 | 3 | Building: pick a machine, place it, place again, cancel | proposed |
 | 4 | Connecting: drawing a supply line from one machine to another, and undoing it | proposed |
 | 5 | Trouble: from seeing a problem to fixing it (tap, Next, the fix) | proposed |
-| 6 | Goals: knowing what to make next, delivering, the map growing, and where the player sees the road ahead (the ring list, 1-road.png) | one goal proposed (#19364912), see "The one goal" |
+| 6 | Goals: knowing what to make next, delivering, the map growing, and where the player sees the road ahead (the ring list, 1-road.png) | end goal set: mine the land (#19364920), steps await a yes |
 | 7 | Research: what it unlocks and when you see it | proposed |
 | 8 | Coming back: the away summary and picking up where you were | proposed |
 | 9 | Menu: save, new game, settings | proposed |
@@ -372,3 +372,22 @@ also makes the factory faster.
 
 Pick A: one picture of the goal on screen, it reuses the five ring segments as ship sections, and
 each step adds a new ability the player feels rather than only a bigger number.
+
+### Set: mine the land
+
+Byron, 2026-11-09 (#19364920), on bot msg 1611: "I think mine the land is a good one. Lore is that
+you are stationed there for mining". That is E (claim the whole map), told as a mining posting.
+
+The goal in plain steps, for a yes before anything is drawn:
+
+- Story: you are posted to this ground to mine it. The posting ends when the land is mined out.
+- One number all game: land mined, as a percent, on one bar at the top. 100 percent is the end.
+- Each ore patch holds a set amount. Drills empty it; an empty patch counts as mined.
+- Mining pays: what you dig and make buys machines and opens the next stretch of land, which has
+  more and richer patches. So every patch mined makes the next one faster (the Moon Sweepers loop).
+- The ring stops being the goal. What it unlocked today (new land, new machines) comes from land
+  mined instead; the ring and Deliver go, and with them the Dock question (2b).
+- Hub stock stays what you build with, never a score.
+
+Open after the yes: how big a patch is, how land opens (in rings as today, or by choosing where
+next), and what the end screen says.
